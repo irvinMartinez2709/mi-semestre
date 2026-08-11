@@ -66,6 +66,16 @@ jobs:
           sed -i "s/versionCode 1/versionCode $CODE/" app/build.gradle
           sed -i "s/versionName \"1.0\"/versionName \"$VER\"/" app/build.gradle
 
+      - name: Restaurar clave de firma (persistente, evita conflicto al actualizar)
+        working-directory: web
+        run: |
+          mkdir -p keystore
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > keystore/mi-semestre.p12
+
+      - name: Configurar firma en build.gradle
+        working-directory: web
+        run: node scripts/parchear-firma.mjs
+
       - name: Sync Android
         working-directory: web
         run: npx cap sync android
@@ -76,17 +86,41 @@ jobs:
           npm install --no-save sharp
           node scripts/generar-iconos.mjs
 
-      - name: Build debug APK
+      - name: Build release APK (firmado con clave persistente)
         working-directory: web/android
-        run: ./gradlew assembleDebug
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: ./gradlew assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: mi-semestre-apk
           path: |
-            web/android/app/build/outputs/apk/debug/app-debug.apk
+            web/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
+
+      - name: Eliminar release anterior de esta versión (reemplazo limpio)
+        if: github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const { data: rel } = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: process.env.APP_VERSION
+              });
+              await github.rest.repos.deleteRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: rel.id
+              });
+              console.log(`Release ${process.env.APP_VERSION} eliminado para reemplazarlo`);
+            } catch (e) {
+              console.log(`No había release previo para ${process.env.APP_VERSION}: ${e.status || e.message}`);
+            }
 
       - name: Create Release
         if: github.ref == 'refs/heads/main'
@@ -94,5 +128,5 @@ jobs:
         with:
           name: "Mi Semestre ${{ env.APP_VERSION }}"
           tag_name: "${{ env.APP_VERSION }}"
-          files: web/android/app/build/outputs/apk/debug/app-debug.apk
+          files: web/android/app/build/outputs/apk/release/app-release.apk
           update_release: true

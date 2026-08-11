@@ -1,7 +1,9 @@
-import { useAjustes } from "../contexto/Ajustes";
+import { useState } from "react";
+import { useAjustes, useConfirmar } from "../contexto/Ajustes";
 import type { KColor } from "../contexto/Ajustes";
 import { estilos } from "./UI";
 import { Icono } from "./Icono";
+import { LogoApp } from "./LogoApp";
 import { VolverInicio } from "./VolverInicio";
 import type { Vista } from "../types";
 
@@ -21,9 +23,33 @@ const CLAVE_COLOR: { clave: KColor; traduccion: string }[] = [
 ];
 
 export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
-  const { t, idioma, fijarIdioma, tema, alternarTema, colores, fijarColor, esPorDefecto, restablecerColores } = useAjustes();
+  const {
+    t,
+    idioma,
+    fijarIdioma,
+    tema,
+    alternarTema,
+    colores,
+    fijarColor,
+    esPorDefecto,
+    restablecerColores,
+    titulo,
+    subtitulo,
+    fijarEncabezado,
+  } = useAjustes();
+  const { notificar } = useConfirmar();
+
+  const [tituloEd, setTituloEd] = useState(titulo);
+  const [subEd, setSubEd] = useState(subtitulo);
 
   const oscuro = tema === "oscuro";
+
+  const guardarEncabezado = async () => {
+    fijarEncabezado(tituloEd, subEd);
+    setTituloEd(tituloEd.trim() || titulo);
+    setSubEd(subEd.trim() || subtitulo);
+    await notificar(t("cfg.encabezado.guardar"));
+  };
 
   return (
     <div className="space-y-4">
@@ -55,6 +81,43 @@ export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
             <span className={`absolute top-1 left-1 grid h-5 w-5 place-items-center rounded-full bg-white transition-all ${oscuro ? "translate-x-5" : ""}`}>
               <Icono nombre={oscuro ? "luna" : "sol"} className="h-3.5 w-3.5" />
             </span>
+          </button>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-borde bg-card p-4">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-lg">
+            <LogoApp className="h-10 w-10" />
+          </span>
+          <div>
+            <p className="font-semibold">{t("cfg.encabezado")}</p>
+            <p className="text-xs text-sub">{t("cfg.encabezado.sub")}</p>
+          </div>
+        </div>
+        <div className="mt-3 space-y-2">
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-sub">{t("cfg.encabezado.titulo")}</label>
+            <input
+              className={estilos.inputClase}
+              value={tituloEd}
+              onChange={(e) => setTituloEd(e.target.value)}
+              placeholder={t("cfg.encabezado.placeholderTitulo")}
+              maxLength={40}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-sub">{t("cfg.encabezado.subtitulo")}</label>
+            <input
+              className={estilos.inputClase}
+              value={subEd}
+              onChange={(e) => setSubEd(e.target.value)}
+              placeholder={t("cfg.encabezado.placeholderSub")}
+              maxLength={60}
+            />
+          </div>
+          <button onClick={guardarEncabezado} className={`${estilos.boton} ${estilos.primario} w-full`}>
+            {t("cfg.encabezado.guardar")}
           </button>
         </div>
       </section>
@@ -125,15 +188,15 @@ export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
         <dl className="mt-3 space-y-2 text-sm">
           <div className="flex justify-between gap-2">
             <dt className="text-sub">{t("cfg.nombre")}</dt>
-            <dd className="font-semibold">{t("app.titulo")}</dd>
+            <dd className="font-semibold">{titulo}</dd>
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-sub">{t("cfg.version")}</dt>
-            <dd className="font-semibold">0.2.0</dd>
+            <dd className="font-semibold">1.0.0</dd>
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-sub">{t("cfg.plataforma")}</dt>
-            <dd className="font-semibold">Web · Android</dd>
+            <dd className="font-semibold">Android</dd>
           </div>
         </dl>
       </section>

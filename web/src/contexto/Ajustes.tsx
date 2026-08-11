@@ -67,15 +67,26 @@ function normalizarHex(h: string): string {
 interface Persistido {
   idioma?: Idioma;
   colores?: Partial<Colores>;
+  encabezado?: { titulo?: string; subtitulo?: string };
 }
 
 const CLAVE = "ms.ajustes.v1";
 
-function leerPersistido(): { idioma: Idioma; colores: Colores } {
+const ENCABEZADO_DEFECTO = { titulo: "Mi Semestre", subtitulo: "Semestre 2 · Año 2" };
+
+function leerPersistido(): {
+  idioma: Idioma;
+  colores: Colores;
+  encabezado: { titulo: string; subtitulo: string };
+} {
   const p = cargar<Persistido>(CLAVE, {});
   return {
     idioma: p.idioma === "en" ? "en" : "es",
     colores: { ...COLORES_POR_DEFECTO, ...(p.colores ?? {}) },
+    encabezado: {
+      titulo: p.encabezado?.titulo || ENCABEZADO_DEFECTO.titulo,
+      subtitulo: p.encabezado?.subtitulo || ENCABEZADO_DEFECTO.subtitulo,
+    },
   };
 }
 
@@ -103,6 +114,9 @@ export interface AjustesValor {
   esPorDefecto: boolean;
   fijarColor: (k: KColor, v: string) => void;
   restablecerColores: () => void;
+  titulo: string;
+  subtitulo: string;
+  fijarEncabezado: (titulo: string, subtitulo: string) => void;
 }
 
 const AjustesContext = createContext<AjustesValor | null>(null);
@@ -127,6 +141,7 @@ export function AjustesProvider({ children }: { children: ReactNode }) {
 
   const [idioma, setIdioma] = useState<Idioma>(inicial.current.idioma);
   const [colores, setColores] = useState<Colores>(inicial.current.colores);
+  const [encabezado, setEncabezado] = useState(inicial.current.encabezado);
   const [tema, setTema] = useState<Tema>(temaInicial);
 
   const [confirmacion, setConfirmacion] = useState<{
@@ -136,8 +151,8 @@ export function AjustesProvider({ children }: { children: ReactNode }) {
   } | null>(null);
 
   useEffect(() => {
-    guardar(CLAVE, { idioma, colores });
-  }, [idioma, colores]);
+    guardar(CLAVE, { idioma, colores, encabezado });
+  }, [idioma, colores, encabezado]);
 
   useEffect(() => {
     const raiz = document.documentElement;
@@ -202,6 +217,14 @@ export function AjustesProvider({ children }: { children: ReactNode }) {
         ),
         fijarColor,
         restablecerColores,
+        titulo: encabezado.titulo,
+        subtitulo: encabezado.subtitulo,
+        fijarEncabezado: (titulo, subtitulo) =>
+          setEncabezado({
+            titulo: titulo.trim() || ENCABEZADO_DEFECTO.titulo,
+            subtitulo:
+              subtitulo.trim() || ENCABEZADO_DEFECTO.subtitulo,
+          }),
       }}
     >
       <ConfirmContext.Provider value={{ confirmar, notificar }}>

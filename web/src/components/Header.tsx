@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Vista } from "../types";
 import { useAjustes } from "../contexto/Ajustes";
 import { Icono } from "./Icono";
+import { LogoApp } from "./LogoApp";
 
 interface Props {
   actual: Vista;
@@ -11,7 +12,7 @@ interface Props {
 export function Header({ actual, alNavegar }: Props) {
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const { t, colores } = useAjustes();
+  const { t, colores, titulo, subtitulo } = useAjustes();
 
   const items = [
     { id: "horario" as Vista, nombre: t("sec.horario"), color: colores.horario, icono: "horario" as const },
@@ -39,15 +40,12 @@ export function Header({ actual, alNavegar }: Props) {
     <header className="sticky top-0 z-30 border-b border-borde bg-card">
       <div className="mx-auto flex h-14 max-w-lg items-center justify-between gap-2 px-4">
         <button onClick={() => ir("inicio")} className="flex items-center gap-2">
-          <span
-            className="grid h-8 w-8 place-items-center rounded-lg text-white"
-            style={{ backgroundColor: colores.acento }}
-          >
-            <Icono nombre="horario" className="h-5 w-5" />
+          <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-lg">
+            <LogoApp className="h-8 w-8" />
           </span>
-          <div className="text-left leading-tight">
-            <p className="text-sm font-bold">{t("app.titulo")}</p>
-            <p className="text-[11px] text-sub">{t("app.subtitulo")}</p>
+          <div className="min-w-0 text-left leading-tight">
+            <p className="truncate text-sm font-bold">{titulo}</p>
+            <p className="truncate text-[11px] text-sub">{subtitulo}</p>
           </div>
         </button>
 

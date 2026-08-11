@@ -47,13 +47,6 @@ jobs:
         working-directory: web
         run: npm install --no-save @capacitor/cli
 
-      - name: Generate PNG icons from SVG
-        working-directory: web
-        run: |
-          npm install --no-save sharp
-          node -e "const s=require('sharp');const fs=require('fs');fs.mkdirSync('assets/icon/only',{recursive:true});fs.mkdirSync('assets/splash/only',{recursive:true});(async()=>{await s('public/icono-app.svg').resize(1024,1024).png().toFile('assets/icon/only/icon.png');await s('public/icono-app.svg').resize(2732,2732).png().toFile('assets/splash/only/splash.png');console.log(' PNG generados');})().catch(e=>{console.error(e);process.exit(1)})"
-          npx --yes @capacitor/assets generate --android
-
       - name: Add Android platform
         working-directory: web
         run: npx cap add android
@@ -61,6 +54,13 @@ jobs:
       - name: Sync Android
         working-directory: web
         run: npx cap sync android
+
+      - name: Generate PNG icons from SVG
+        working-directory: web
+        run: |
+          npm install --no-save sharp
+          node -e "const s=require('sharp');const fs=require('fs');fs.mkdirSync('assets/icon/only',{recursive:true});fs.mkdirSync('assets/splash/only',{recursive:true});(async()=>{await s('public/icono-app.svg').resize(1024,1024).png().toFile('assets/icon/only/icon.png');await s('public/icono-app.svg').resize(2732,2732).png().toFile('assets/splash/only/splash.png');console.log(' PNG generados');})().catch(e=>{console.error(e);process.exit(1)})"
+          npx --yes @capacitor/assets generate --android
 
       - name: Build debug APK
         working-directory: web/android

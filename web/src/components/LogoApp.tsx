@@ -1,0 +1,74 @@
+export function LogoApp({ className = "w-8 h-8" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 1024 1024" className={className} role="img" aria-label="Mi Semestre">
+      <defs>
+        <linearGradient id="lgbg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#FFB86C" />
+          <stop offset="0.55" stopColor="#FF8A50" />
+          <stop offset="1" stopColor="#2E6FE0" />
+        </linearGradient>
+        <linearGradient id="lgbookL" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#6CB4FF" />
+          <stop offset="1" stopColor="#3D8BFF" />
+        </linearGradient>
+        <linearGradient id="lgbookR" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#FFE08A" />
+          <stop offset="1" stopColor="#FFB347" />
+        </linearGradient>
+        <linearGradient id="lgribbon" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stopColor="#FF9A5C" />
+          <stop offset="1" stopColor="#22D3EE" />
+        </linearGradient>
+        <linearGradient id="lgcalTop" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#FF6B5C" />
+          <stop offset="1" stopColor="#E8453A" />
+        </linearGradient>
+        <radialGradient id="lgglow" cx="0.25" cy="0.2" r="0.9">
+          <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.9" />
+          <stop offset="0.3" stopColor="#FFFFFF" stopOpacity="0.15" />
+          <stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <rect width="1024" height="1024" rx="230" fill="url(#lgbg)" />
+
+      <circle cx="150" cy="130" r="90" fill="#FFFFFF" opacity="0.9" />
+      <circle cx="150" cy="130" r="150" fill="url(#lgglow)" />
+
+      <path
+        d="M150 820 C 380 800, 420 640, 560 560 C 700 480, 740 380, 840 300 L 900 240
+           L 906 336 L 950 260 C 900 250, 870 250, 800 300
+           C 720 370, 680 500, 560 580 C 440 660, 380 800, 150 840 Z"
+        fill="url(#lgribbon)"
+        opacity="0.95"
+      />
+      <path d="M812 214 L 930 190 L 884 300 Z" fill="#06B6D4" />
+      <path d="M560 560 C 590 530, 640 540, 660 580 C 620 600, 580 595, 560 560 Z" fill="#5BD46B" />
+      <path d="M560 560 C 580 560, 610 556, 636 562" stroke="#2E8B3F" strokeWidth="14" fill="none" strokeLinecap="round" />
+
+      <g transform="translate(512 560)">
+        <path
+          d="M-260 -10 C -150 -40, -60 -30, 0 20 C 60 -30, 150 -40, 260 -10 L 260 40 C 150 70, 60 60, 0 100 C -60 60, -150 70, -260 40 Z"
+          fill="#1E3A8A"
+        />
+        <path d="M0 20 C -60 -30, -150 -40, -250 -12 L -235 42 C -150 62, -65 55, 0 96 Z" fill="url(#lgbookL)" />
+        <path d="M0 20 C 60 -30, 150 -40, 250 -12 L 235 42 C 150 62, 65 55, 0 96 Z" fill="url(#lgbookR)" />
+        <path d="M-118 12 l 14 28 30 4 -22 21 6 30 -28 -15 -28 15 6 -30 -22 -21 30 -4 Z" fill="#22D3EE" />
+        <path d="M118 12 l 14 28 30 4 -22 21 6 30 -28 -15 -28 15 6 -30 -22 -21 30 -4 Z" fill="#FFD54A" />
+      </g>
+
+      <g transform="translate(560 330) rotate(-6)">
+        <rect x="-170" y="-90" width="340" height="300" rx="46" fill="#FFFFFF" />
+        <rect x="-170" y="-140" width="340" height="80" rx="46" fill="url(#lgcalTop)" />
+        <rect x="-170" y="-90" width="340" height="30" fill="url(#lgcalTop)" />
+        <rect x="-110" y="-150" width="28" height="60" rx="14" fill="#B0BEC5" />
+        <rect x="82" y="-150" width="28" height="60" rx="14" fill="#B0BEC5" />
+        <circle cx="-52" cy="20" r="18" fill="#1E293B" />
+        <circle cx="52" cy="20" r="18" fill="#1E293B" />
+        <path d="M-38 74 C -18 104, 18 104, 38 74" stroke="#1E293B" strokeWidth="16" fill="none" strokeLinecap="round" />
+        <circle cx="118" cy="118" r="52" fill="#34D399" />
+        <path d="M92 120 l 18 18 36 -40" stroke="#FFFFFF" strokeWidth="16" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
+}

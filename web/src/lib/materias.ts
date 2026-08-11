@@ -22,23 +22,6 @@ export interface MateriaInfo {
   profesor?: string;
 }
 
-export function materiasDe(horario: Horario): MateriaInfo[] {
-  const mapa = new Map<string, number>();
-  for (const dia of DIAS) {
-    for (const c of horario[dia]) {
-      const nom = nombreMateria(c.materia);
-      mapa.set(nom, (mapa.get(nom) ?? 0) + 1);
-    }
-  }
-  return Array.from(mapa.entries())
-    .map(([n, horas]) => ({
-      nombre: n,
-      color: colorDeMateria(n),
-      horas,
-    }))
-    .sort((a, b) => a.nombre.localeCompare(b.nombre));
-}
-
 // Materias efectivas de la app: unión del catálogo (ms.materias.v1) con las
 // materias presentes en el horario. Así las materias nuevas (aún sin clases)
 // se vinculan con las demás secciones igual que las que ya existen.
@@ -95,10 +78,3 @@ export function colorDeMateria(nombre: string): string {
   return PALETA_MATERIAS[hash % PALETA_MATERIAS.length];
 }
 
-export const NOMBRES_POR_DEFECTO = [
-  "SISTEMAS EMBEBI",
-  "CIBERSEGURIDAD",
-  "DESARROLLO WEB",
-  "ESTA. Y PROB.",
-  "MATEMÁTICA II",
-];

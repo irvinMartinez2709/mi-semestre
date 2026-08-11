@@ -15,7 +15,7 @@ export default function App() {
   const [splash, setSplash] = useState(true);
 
   useEffect(() => {
-    const id = setTimeout(() => setSplash(false), 2000);
+    const id = setTimeout(() => setSplash(false), 2400);
     return () => clearTimeout(id);
   }, []);
 
@@ -27,16 +27,18 @@ export default function App() {
   return (
     <div className="min-h-screen">
       <Splash oculto={!splash} />
-      <Header actual={vista} alNavegar={ir} />
-      <main className="w-full px-4 pb-10 pt-4 md:px-6 lg:px-8">
-        {vista === "inicio" && <Home alNavegar={ir} />}
-        {vista === "horario" && <HorarioPage alNavegar={ir} />}
-        {vista === "ausencias" && <AusenciasPage alNavegar={ir} />}
-        {vista === "calificaciones" && <CalificacionesPage alNavegar={ir} />}
-        {vista === "bitacoras" && <BitacorasPage alNavegar={ir} />}
-        {vista === "materias" && <MateriasPage alNavegar={ir} />}
-        {vista === "config" && <ConfigPage alNavegar={ir} />}
-      </main>
+      <div className={splash ? "pointer-events-none invisible" : undefined}>
+        <Header actual={vista} alNavegar={ir} />
+        <main className="w-full px-4 pb-10 pt-4 md:px-6 lg:px-8">
+          {vista === "inicio" && <Home alNavegar={ir} />}
+          {vista === "horario" && <HorarioPage alNavegar={ir} />}
+          {vista === "ausencias" && <AusenciasPage alNavegar={ir} />}
+          {vista === "calificaciones" && <CalificacionesPage alNavegar={ir} />}
+          {vista === "bitacoras" && <BitacorasPage alNavegar={ir} />}
+          {vista === "materias" && <MateriasPage alNavegar={ir} />}
+          {vista === "config" && <ConfigPage alNavegar={ir} />}
+        </main>
+      </div>
     </div>
   );
 }

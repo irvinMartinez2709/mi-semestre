@@ -8,23 +8,6 @@ export const DIAS: Dia[] = [
   "viernes",
 ];
 
-export const DIAS_LARGO = [
-  "Domingo",
-  "Lunes",
-  "Martes",
-  "Miércoles",
-  "Jueves",
-  "Viernes",
-  "Sábado",
-];
-
-export function fechaLarga(): string {
-  const hoy = new Date();
-  return `${DIAS_LARGO[hoy.getDay()]}, ${hoy.getDate()} de ${hoy
-    .toLocaleDateString("es-MX", { month: "long" })
-    .replace(/^./, (c) => c.toUpperCase())} de ${hoy.getFullYear()}`;
-}
-
 export function diaDeHoy(): Dia | null {
   const d = new Date().getDay();
   if (d >= 1 && d <= 5) return DIAS[d - 1];
@@ -70,14 +53,6 @@ export function hoyMinutos(): number {
 
 export function nombreMateria(materia: string): string {
   return materia.replace(/\s*\(L\)/gi, "").trim();
-}
-
-export function materiasUnicas(horario: Horario): string[] {
-  const set = new Set<string>();
-  for (const dia of DIAS) {
-    for (const c of horario[dia]) set.add(nombreMateria(c.materia));
-  }
-  return Array.from(set).sort();
 }
 
 export function totalClases(horario: Horario): number {

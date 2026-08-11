@@ -1,5 +1,3 @@
-const DIAS_CORTO = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
-
 export function isoHoy(): string {
   return isoDe(new Date());
 }
@@ -23,11 +21,6 @@ export function lunesDeISO(iso: string): string {
   const desplazamiento = (fecha.getDay() + 6) % 7;
   fecha.setDate(fecha.getDate() - desplazamiento);
   return isoDe(fecha);
-}
-
-export function diaSemanaDe(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  return DIAS_CORTO[new Date(y, m - 1, d).getDay()];
 }
 
 export function formatoFechaCorta(iso: string, locale = "es-MX"): string {

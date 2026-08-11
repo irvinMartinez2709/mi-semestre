@@ -1,3 +1,6 @@
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import { VERSION, CLAVE_HORARIO, CLAVE_MATERIAS, CLAVE_AUSENCIAS, CLAVE_CALIFICACIONES, CLAVE_CREDITOS, CLAVE_BITACORAS } from "./version";
 import { cargar } from "./storage";
 import { DIAS, nombreMateria } from "./hora";
@@ -59,22 +62,63 @@ function nombreArchivo(ext: string): string {
 
 export type ResultadoExportar = "compartido" | "descargado" | "cancelado";
 
+async function blobABase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let bin = "";
+  const trozo = 0x8000;
+  for (let i = 0; i < bytes.length; i += trozo) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + trozo));
+  }
+  return btoa(bin);
+}
+
+// Guarda o comparte el archivo según el contexto:
+// 1) Web Share API (escritorio / iOS)
+// 2) App nativa (Capacitor): lo escribe en caché y abre la hoja nativa de Android,
+//    donde el usuario elige dónde guardarlo o con qué app compartirlo.
+// 3) Descarga clásica (navegador de escritorio).
+async function guardarOCompartir(file: File, texto: string): Promise<ResultadoExportar> {
+  if (navigator.share) {
+    try {
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: "Mi Semestre", text: texto });
+        return "compartido";
+      }
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return "cancelado";
+      // si falla por otra razón, intentamos con la app nativa o la descarga
+    }
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const b64 = await blobABase64(file);
+      const ruta = `respaldo/${file.name}`;
+      await Filesystem.writeFile({
+        path: ruta,
+        data: b64,
+        directory: Directory.Cache,
+        recursive: true,
+      });
+      const { uri } = await Filesystem.getUri({ path: ruta, directory: Directory.Cache });
+      await Share.share({ files: [uri], title: "Mi Semestre", text: texto });
+      void Filesystem.deleteFile({ path: ruta, directory: Directory.Cache }).catch(() => undefined);
+      return "compartido";
+    } catch {
+      // si el plugin falla, caemos en la descarga clásica
+    }
+  }
+
+  descargarArchivo(file);
+  return "descargado";
+}
+
 export async function exportarJSON(): Promise<ResultadoExportar> {
   const data = reunirRespaldo();
   const file = new File([JSON.stringify(data, null, 2)], nombreArchivo("json"), {
     type: "application/json",
   });
-  if (navigator.share) {
-    try {
-      await navigator.share({ files: [file], title: "Mi Semestre", text: "Respaldo de datos" });
-      return "compartido";
-    } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") return "cancelado";
-      // si share falla por otra razón, caemos en descarga
-    }
-  }
-  descargarArchivo(file);
-  return "descargado";
+  return guardarOCompartir(file, "Respaldo de datos");
 }
 
 export function validarRespaldo(texto: string): Respaldo | null {
@@ -357,14 +401,5 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
 
   const blob = doc.output("blob");
   const file = new File([blob], nombreArchivo("pdf"), { type: "application/pdf" });
-  if (navigator.share) {
-    try {
-      await navigator.share({ files: [file], title: "Mi Semestre", text: t("pdf.titulo") });
-      return "compartido";
-    } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") return "cancelado";
-    }
-  }
-  descargarArchivo(file);
-  return "descargado";
+  return guardarOCompartir(file, t("pdf.titulo"));
 }

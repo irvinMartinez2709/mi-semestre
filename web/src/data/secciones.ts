@@ -38,7 +38,3 @@ export const SECCIONES: Seccion[] = [
     color: "#64748B",
   },
 ];
-
-export function seccionDe(id: string): Seccion | undefined {
-  return SECCIONES.find((s) => s.id === id);
-}

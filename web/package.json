@@ -1,7 +1,7 @@
 {
   "name": "mi-semestre",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "description": "Gestor de semestre: horario, ausencias/asistencias, calificaciones y bitácoras. Web-first (Vite + React + Tailwind + Capacitor).",
   "scripts": {
@@ -16,6 +16,8 @@
   "dependencies": {
     "@capacitor/android": "^6.1.2",
     "@capacitor/core": "^6.1.2",
+    "@capacitor/filesystem": "^6.0.4",
+    "@capacitor/share": "^6.0.4",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "react": "^18.3.1",

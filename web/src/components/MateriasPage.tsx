@@ -176,6 +176,16 @@ function MateriaModal({
               />
             ))}
           </div>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="flex-1 text-xs font-semibold text-sub">{t("mat.color.personalizado")}</span>
+            <input
+              type="color"
+              value={color || "#2E7CF6"}
+              onChange={(e) => setColor(e.target.value)}
+              aria-label={t("mat.color.personalizado")}
+              className="h-8 w-12 cursor-pointer rounded-lg border border-borde bg-card p-0.5"
+            />
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

@@ -61,6 +61,7 @@ export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
   const alExportarJSON = async () => {
     const r = await exportarJSON();
     if (r === "descargado") await notificar(t("cfg.exportar.listos"));
+    else if (r === "compartido") await notificar(t("cfg.exportar.compartido"));
   };
 
   const alExportarPDF = async () => {
@@ -68,6 +69,7 @@ export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
     try {
       const r = await exportarPDF({ t, locale, dias });
       if (r === "descargado") await notificar(t("cfg.pdf.listos"));
+      else if (r === "compartido") await notificar(t("cfg.pdf.compartido"));
     } catch {
       await notificar(t("cfg.pdf.error"));
     } finally {

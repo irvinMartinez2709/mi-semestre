@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { DIAS, aMinutos, claseActiva, diaDeHoy, hoyMinutos, nombreMateria } from "../lib/hora";
-import { colorDeMateria, materiasDe } from "../lib/materias";
+import { materiasActivas, colorDeMateria } from "../lib/materias";
 import { useHorario } from "../hooks/useHorario";
+import { useMaterias } from "../hooks/useMaterias";
 import { useAjustes, useConfirmar } from "../contexto/Ajustes";
 import { estilos, IconoBoton, Modal } from "./UI";
 import type { Clase, Dia, Vista } from "../types";
@@ -34,6 +35,7 @@ export function HorarioPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
   const { t, colores, dias } = useAjustes();
   const { confirmar } = useConfirmar();
   const { horario, agregarClase, editarClase, eliminarClase } = useHorario();
+  const { materias } = useMaterias();
   const [form, setForm] = useState<FormEstado | null>(null);
 
   const franjas = useMemo(() => {
@@ -69,7 +71,7 @@ export function HorarioPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
         <div>
           <h1 className="text-xl font-bold">{t("hor.titulo")}</h1>
           <p className="mt-0.5 text-xs text-sub">
-            {materiasDe(horario).length} · {total} · {t("stat.clases")}
+            {materiasActivas(horario, materias).length} · {total} · {t("stat.clases")}
           </p>
         </div>
         <VolverInicio alNavegar={alNavegar} />
@@ -251,10 +253,11 @@ function FormClase({
 }) {
   const { t, dias } = useAjustes();
   const { horario } = useHorario();
+  const { materias } = useMaterias();
   const { notificar } = useConfirmar();
   const existentes = useMemo(
-    () => Array.from(new Set(DIAS.flatMap((d) => horario[d].map((c) => c.materia)))),
-    [horario]
+    () => materiasActivas(horario, materias).map((m) => m.nombre),
+    [horario, materias]
   );
 
   const [hora, setHora] = useState("");
@@ -301,7 +304,7 @@ function FormClase({
           <label className="mb-1 block text-xs font-semibold text-sub">{t("hor.form.materia")}</label>
           <input className={estilos.inputClase} list="materias-conocidas" value={materia} onChange={(e) => setMateria(e.target.value)} placeholder={t("hor.placeholder.materia")} />
           <datalist id="materias-conocidas">
-            {Array.from(new Set([...existentes, "SISTEMAS EMBEBI", "CIBERSEGURIDAD", "DESARROLLO WEB", "ESTA. Y PROB.", "MATEMÁTICA II"])).map((m) => (
+            {existentes.map((m) => (
               <option key={m} value={m} />
             ))}
           </datalist>

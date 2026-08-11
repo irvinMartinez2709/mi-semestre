@@ -1,4 +1,4 @@
-import type { Horario } from "../types";
+import type { Horario, Materia } from "../types";
 import { DIAS, nombreMateria } from "./hora";
 
 export const PALETA_MATERIAS = [
@@ -18,6 +18,8 @@ export interface MateriaInfo {
   nombre: string;
   color: string;
   horas: number;
+  creditos?: number;
+  profesor?: string;
 }
 
 export function materiasDe(horario: Horario): MateriaInfo[] {
@@ -35,6 +37,54 @@ export function materiasDe(horario: Horario): MateriaInfo[] {
       horas,
     }))
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+// Materias efectivas de la app: unión del catálogo (ms.materias.v1) con las
+// materias presentes en el horario. Así las materias nuevas (aún sin clases)
+// se vinculan con las demás secciones igual que las que ya existen.
+export function materiasActivas(
+  horario: Horario,
+  catalogo: Materia[]
+): MateriaInfo[] {
+  const mapa = new Map<
+    string,
+    { horas: number; mat?: Materia }
+  >();
+  for (const dia of DIAS) {
+    for (const c of horario[dia]) {
+      const nom = nombreMateria(c.materia);
+      const e = mapa.get(nom);
+      if (e) e.horas += 1;
+      else mapa.set(nom, { horas: 1 });
+    }
+  }
+  for (const m of catalogo) {
+    const nom = (m.nombre || "").trim();
+    if (!nom) continue;
+    const e = mapa.get(nom);
+    if (e) e.mat = m;
+    else mapa.set(nom, { horas: 0, mat: m });
+  }
+  return Array.from(mapa.entries())
+    .map(([nombre, e]) => ({
+      nombre,
+      color: e.mat?.color || colorDeMateria(nombre),
+      horas: e.horas,
+      creditos: e.mat?.creditos ?? 3,
+      profesor: e.mat?.profesor ?? "",
+    }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+// Catálogo inicial (migración): materias que ya están en el horario.
+export function materiasDesdeHorario(horario: Horario): Materia[] {
+  const set = new Set<string>();
+  for (const dia of DIAS) {
+    for (const c of horario[dia]) set.add(nombreMateria(c.materia));
+  }
+  return Array.from(set)
+    .sort()
+    .map((nombre) => ({ nombre }));
 }
 
 export function colorDeMateria(nombre: string): string {

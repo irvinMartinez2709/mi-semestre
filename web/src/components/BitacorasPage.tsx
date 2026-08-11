@@ -2,7 +2,8 @@ import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useBitacoras } from "../hooks/useBitacoras";
 import { useHorario } from "../hooks/useHorario";
-import { colorDeMateria, materiasDe } from "../lib/materias";
+import { useMaterias } from "../hooks/useMaterias";
+import { colorDeMateria, materiasActivas } from "../lib/materias";
 import { formatoFechaCorta, isoDe, isoHoy } from "../lib/fechas";
 import { uid } from "../lib/storage";
 import { useAjustes, useConfirmar } from "../contexto/Ajustes";
@@ -16,8 +17,9 @@ export function BitacorasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
   const { t, locale } = useAjustes();
   const { confirmar } = useConfirmar();
   const { horario } = useHorario();
+  const { materias: catalogo } = useMaterias();
   const { bitacoras, agregarBitacora, editarBitacora, eliminarBitacora } = useBitacoras();
-  const materias = materiasDe(horario);
+  const materias = materiasActivas(horario, catalogo);
   const [filtro, setFiltro] = useState<Filtro>("__todas__");
   const [modal, setModal] = useState<null | { bit?: Bitacora }>(null);
 

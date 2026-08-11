@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { useHorario } from "../hooks/useHorario";
+import { useMaterias } from "../hooks/useMaterias";
 import { useAusencias } from "../hooks/useAusencias";
 import { useCalificaciones } from "../hooks/useCalificaciones";
 import { useBitacoras } from "../hooks/useBitacoras";
 import { useAjustes } from "../contexto/Ajustes";
-import { materiasDe } from "../lib/materias";
+import { materiasActivas } from "../lib/materias";
 import { redondear } from "../lib/storage";
 import { promedioMateria } from "../lib/utp";
 import { claseActiva, diaDeHoy, hoyMinutos, nombreMateria, totalClases } from "../lib/hora";
@@ -19,6 +20,7 @@ interface Props {
 export function Home({ alNavegar }: Props) {
   const { t, colores } = useAjustes();
   const { horario } = useHorario();
+  const { materias } = useMaterias();
   const { semanas } = useAusencias();
   const { porMateria } = useCalificaciones();
   const { bitacoras } = useBitacoras();
@@ -38,8 +40,9 @@ export function Home({ alNavegar }: Props) {
 
     const hoy = diaDeHoy();
     const prox = hoy ? claseActiva(horario[hoy], hoyMinutos()).proxima : null;
-    return { materias: materiasDe(horario), clasesSemana: totalClases(horario), presentes, faltas, promedio, nBitacoras: bitacoras.length, prox };
-  }, [horario, semanas, porMateria, bitacoras]);
+    const materiasInfo = materiasActivas(horario, materias);
+    return { materias: materiasInfo, clasesSemana: totalClases(horario), presentes, faltas, promedio, nBitacoras: bitacoras.length, prox };
+  }, [horario, materias, semanas, porMateria, bitacoras]);
 
   const saludo = saludoKey();
 
@@ -48,6 +51,8 @@ export function Home({ alNavegar }: Props) {
     { id: "ausencias" as Vista, nombre: t("sec.ausencias"), desc: t("sec.ausencias.desc"), color: colores.ausencias },
     { id: "calificaciones" as Vista, nombre: t("sec.calificaciones"), desc: t("sec.calificaciones.desc"), color: colores.calificaciones },
     { id: "bitacoras" as Vista, nombre: t("sec.bitacoras"), desc: t("sec.bitacoras.desc"), color: colores.bitacoras },
+    { id: "materias" as Vista, nombre: t("sec.materias"), desc: t("sec.materias.desc"), color: colores.materias },
+    { id: "config" as Vista, nombre: t("sec.config"), desc: t("sec.config.desc"), color: colores.config },
   ];
 
   return (

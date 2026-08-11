@@ -26,6 +26,12 @@ export const SECCIONES: Seccion[] = [
     color: "#EC4899",
   },
   {
+    id: "materias",
+    nombre: "Materias",
+    descripcion: "Catálogo y vínculos",
+    color: "#0D9488",
+  },
+  {
     id: "config",
     nombre: "Configuración",
     descripcion: "Apariencia y preferencias",

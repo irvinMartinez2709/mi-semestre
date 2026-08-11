@@ -5,6 +5,13 @@ export interface Clase {
   profesor?: string;
 }
 
+export interface Materia {
+  nombre: string;
+  color?: string;
+  creditos?: number;
+  profesor?: string;
+}
+
 export type Dia =
   | "lunes"
   | "martes"
@@ -20,6 +27,7 @@ export type Vista =
   | "ausencias"
   | "calificaciones"
   | "bitacoras"
+  | "materias"
   | "config";
 
 export interface Seccion {

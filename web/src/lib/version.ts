@@ -1,0 +1,10 @@
+export const VERSION = "1.0.1";
+export const CLAVE_VERSION = "ms.version.v1";
+export const CLAVE_HORARIO = "ms.horario.v1";
+export const CLAVE_MATERIAS = "ms.materias.v1";
+export const CLAVE_AUSENCIAS = "ms.ausencias.v1";
+export const CLAVE_CALIFICACIONES = "ms.calificaciones.v1";
+export const CLAVE_CREDITOS = "ms.creditos.v1";
+export const CLAVE_BITACORAS = "ms.bitacoras.v1";
+export const CLAVE_AJUSTES = "ms.ajustes.v1";
+export const CLAVE_TEMA = "ms.tema.v1";

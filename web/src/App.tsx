@@ -6,6 +6,7 @@ import { HorarioPage } from "./components/HorarioPage";
 import { AusenciasPage } from "./components/AusenciasPage";
 import { CalificacionesPage } from "./components/CalificacionesPage";
 import { BitacorasPage } from "./components/BitacorasPage";
+import { MateriasPage } from "./components/MateriasPage";
 import { ConfigPage } from "./components/ConfigPage";
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
         {vista === "ausencias" && <AusenciasPage alNavegar={ir} />}
         {vista === "calificaciones" && <CalificacionesPage alNavegar={ir} />}
         {vista === "bitacoras" && <BitacorasPage alNavegar={ir} />}
+        {vista === "materias" && <MateriasPage alNavegar={ir} />}
         {vista === "config" && <ConfigPage alNavegar={ir} />}
       </main>
     </div>

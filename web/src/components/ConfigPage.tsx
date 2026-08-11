@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAjustes, useConfirmar } from "../contexto/Ajustes";
 import type { KColor } from "../contexto/Ajustes";
 import { estilos } from "./UI";
@@ -6,6 +6,8 @@ import { Icono } from "./Icono";
 import { LogoApp } from "./LogoApp";
 import { VolverInicio } from "./VolverInicio";
 import type { Vista } from "../types";
+import { VERSION } from "../lib/version";
+import { exportarJSON, exportarPDF, importarJSON } from "../lib/exportar";
 
 const CLAVE_COLOR: { clave: KColor; traduccion: string }[] = [
   { clave: "acento", traduccion: "cfg.color.acento" },
@@ -15,6 +17,7 @@ const CLAVE_COLOR: { clave: KColor; traduccion: string }[] = [
   { clave: "ausencias", traduccion: "cfg.color.ausencias" },
   { clave: "calificaciones", traduccion: "cfg.color.calificaciones" },
   { clave: "bitacoras", traduccion: "cfg.color.bitacoras" },
+  { clave: "materias", traduccion: "cfg.color.materias" },
   { clave: "config", traduccion: "cfg.color.config" },
   { clave: "asistPresente", traduccion: "cfg.color.asistPresente" },
   { clave: "asistParcial", traduccion: "cfg.color.asistParcial" },
@@ -25,6 +28,8 @@ const CLAVE_COLOR: { clave: KColor; traduccion: string }[] = [
 export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
   const {
     t,
+    locale,
+    dias,
     idioma,
     fijarIdioma,
     tema,
@@ -37,10 +42,12 @@ export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
     subtitulo,
     fijarEncabezado,
   } = useAjustes();
-  const { notificar } = useConfirmar();
+  const { notificar, confirmar } = useConfirmar();
 
   const [tituloEd, setTituloEd] = useState(titulo);
   const [subEd, setSubEd] = useState(subtitulo);
+  const [generandoPdf, setGenerandoPdf] = useState(false);
+  const refArchivo = useRef<HTMLInputElement>(null);
 
   const oscuro = tema === "oscuro";
 
@@ -49,6 +56,39 @@ export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
     setTituloEd(tituloEd.trim() || titulo);
     setSubEd(subEd.trim() || subtitulo);
     await notificar(t("cfg.encabezado.guardar"));
+  };
+
+  const alExportarJSON = async () => {
+    const r = await exportarJSON();
+    if (r === "descargado") await notificar(t("cfg.exportar.listos"));
+  };
+
+  const alExportarPDF = async () => {
+    setGenerandoPdf(true);
+    try {
+      const r = await exportarPDF({ t, locale, dias });
+      if (r === "descargado") await notificar(t("cfg.pdf.listos"));
+    } catch {
+      await notificar(t("cfg.pdf.error"));
+    } finally {
+      setGenerandoPdf(false);
+    }
+  };
+
+  const alImportarJSON = async (file: File) => {
+    const ok = await confirmar({
+      mensaje: t("cfg.importar.confirm"),
+      confirmarTexto: t("comun.confirmar"),
+      peligro: true,
+    });
+    if (!ok) return;
+    const res = await importarJSON(file);
+    if (!res.ok) {
+      await notificar(t("cfg.importar.error"));
+      return;
+    }
+    await notificar(t("cfg.importar.listos"));
+    window.location.reload();
   };
 
   return (
@@ -184,6 +224,41 @@ export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
       </section>
 
       <section className="rounded-xl border border-borde bg-card p-4">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-lg text-white" style={{ backgroundColor: colores.acento }}>
+            <Icono nombre="config" />
+          </span>
+          <div>
+            <p className="font-semibold">{t("cfg.datos")}</p>
+            <p className="text-xs text-sub">{t("cfg.datos.sub")}</p>
+          </div>
+        </div>
+        <p className="mt-3 text-[11px] text-sub">{t("cfg.datos.aviso")}</p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-3">
+          <button onClick={alExportarJSON} className={`${estilos.boton} ${estilos.secundario}`}>
+            {t("cfg.exportar")}
+          </button>
+          <button onClick={() => refArchivo.current?.click()} className={`${estilos.boton} ${estilos.secundario}`}>
+            {t("cfg.importar")}
+          </button>
+          <button onClick={alExportarPDF} disabled={generandoPdf} className={`${estilos.boton} ${estilos.primario}`}>
+            {generandoPdf ? t("cfg.pdf.generando") : t("cfg.pdf")}
+          </button>
+        </div>
+        <input
+          ref={refArchivo}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void alImportarJSON(f);
+            e.target.value = "";
+          }}
+        />
+      </section>
+
+      <section className="rounded-xl border border-borde bg-card p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-sub">{t("cfg.acercaDe")}</p>
         <dl className="mt-3 space-y-2 text-sm">
           <div className="flex justify-between gap-2">
@@ -192,7 +267,7 @@ export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-sub">{t("cfg.version")}</dt>
-            <dd className="font-semibold">1.0.0</dd>
+            <dd className="font-semibold">{VERSION}</dd>
           </div>
           <div className="flex justify-between gap-2">
             <dt className="text-sub">{t("cfg.plataforma")}</dt>

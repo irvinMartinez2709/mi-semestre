@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useCalificaciones } from "../hooks/useCalificaciones";
 import { useHorario } from "../hooks/useHorario";
-import { colorDeMateria, materiasDe } from "../lib/materias";
+import { useMaterias } from "../hooks/useMaterias";
+import { colorDeMateria, materiasActivas } from "../lib/materias";
 import { redondear } from "../lib/storage";
 import {
   colorDeLetra,
@@ -19,10 +20,11 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
   const { t, colores } = useAjustes();
   const { confirmar } = useConfirmar();
   const { horario } = useHorario();
+  const { materias } = useMaterias();
   const cal = useCalificaciones();
-  const materias = materiasDe(horario);
+  const materiasAct = materiasActivas(horario, materias);
   const [seleccion, setSeleccion] = useState<string>("");
-  const activa = seleccion || materias[0]?.nombre || "";
+  const activa = seleccion || materiasAct[0]?.nombre || "";
 
   const [modalSeccion, setModalSeccion] = useState<null | { sec?: SeccionNota }>(null);
   const [modalNota, setModalNota] = useState<null | { secId: string; nota?: Calificacion }>(null);
@@ -40,7 +42,7 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
     return Math.max(0, 100 - otras);
   };
 
-  if (materias.length === 0) {
+  if (materiasAct.length === 0) {
     return (
       <div className="space-y-4">
         <Titulo alNavegar={alNavegar} />
@@ -74,7 +76,7 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
       </section>
 
       <Chips
-        opciones={materias.map((m) => ({ id: m.nombre, etiqueta: m.nombre }))}
+        opciones={materiasAct.map((m) => ({ id: m.nombre, etiqueta: m.nombre }))}
         seleccion={activa}
         onChange={setSeleccion}
         color={(v) => colorDeMateria(v)}
@@ -174,7 +176,7 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
 
       {modalCreditos && (
         <CreditosModal
-          materias={materias.map((m) => m.nombre)}
+          materias={materiasAct.map((m) => m.nombre)}
           creditos={cal.creditos}
           onCerrar={() => setModalCreditos(false)}
           onGuardar={cal.fijarCreditos}

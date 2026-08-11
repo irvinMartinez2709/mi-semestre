@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 import { DIAS, nombreMateria } from "../lib/hora";
 import { useAusencias } from "../hooks/useAusencias";
 import { useHorario } from "../hooks/useHorario";
-import { colorDeMateria, materiasDe } from "../lib/materias";
+import { useMaterias } from "../hooks/useMaterias";
+import { colorDeMateria, materiasActivas } from "../lib/materias";
 import { estadoDeDia, type EstadoDia } from "../lib/asistencia";
 import { formatoFechaCorta, formatoFechaNumero, isoHoy, lunesDeISO, sumarDiasISO } from "../lib/fechas";
 import { useAjustes, useConfirmar, type Colores } from "../contexto/Ajustes";
@@ -17,13 +18,14 @@ export function AusenciasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
   const { t, locale, diasCorto, colores } = useAjustes();
   const { confirmar, notificar } = useConfirmar();
   const { horario } = useHorario();
+  const { materias: catalogo } = useMaterias();
   const { semanas, agregarSemana, eliminarSemana, setRegistro, alternarFeriado } = useAusencias();
   const [inicioSemana, setInicioSemana] = useState(() => lunesDeISO(isoHoy()));
   const [filtro, setFiltro] = useState<Filtro>("__todas__");
   const [abiertas, setAbiertas] = useState<Record<string, boolean>>({});
   const [abiertos, setAbiertos] = useState<Record<string, boolean>>({});
 
-  const materias = materiasDe(horario);
+  const materias = materiasActivas(horario, catalogo);
 
   const resumen = useMemo(() => {
     let pres = 0;

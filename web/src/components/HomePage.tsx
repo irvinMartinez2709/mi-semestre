@@ -1,0 +1,142 @@
+import { useMemo } from "react";
+import { useHorario } from "../hooks/useHorario";
+import { useAusencias } from "../hooks/useAusencias";
+import { useCalificaciones } from "../hooks/useCalificaciones";
+import { useBitacoras } from "../hooks/useBitacoras";
+import { useAjustes } from "../contexto/Ajustes";
+import { materiasDe } from "../lib/materias";
+import { redondear } from "../lib/storage";
+import { promedioMateria } from "../lib/utp";
+import { claseActiva, diaDeHoy, hoyMinutos, nombreMateria, totalClases } from "../lib/hora";
+import { Icono } from "./Icono";
+import type { NombreIcono } from "./Icono";
+import type { Vista } from "../types";
+
+interface Props {
+  alNavegar: (v: Vista) => void;
+}
+
+export function Home({ alNavegar }: Props) {
+  const { t, colores } = useAjustes();
+  const { horario } = useHorario();
+  const { semanas } = useAusencias();
+  const { porMateria } = useCalificaciones();
+  const { bitacoras } = useBitacoras();
+
+  const stats = useMemo(() => {
+    let presentes = 0;
+    let faltas = 0;
+    for (const s of semanas)
+      for (const v of Object.values(s.registros)) {
+        if (v === true) presentes++;
+        else if (v === false) faltas++;
+      }
+    const notas = Object.values(porMateria)
+      .map((secciones) => promedioMateria(secciones).promedio)
+      .filter((p): p is number => p !== null);
+    const promedio = notas.length === 0 ? null : notas.reduce((a, b) => a + b, 0) / notas.length;
+
+    const hoy = diaDeHoy();
+    const prox = hoy ? claseActiva(horario[hoy], hoyMinutos()).proxima : null;
+    return { materias: materiasDe(horario), clasesSemana: totalClases(horario), presentes, faltas, promedio, nBitacoras: bitacoras.length, prox };
+  }, [horario, semanas, porMateria, bitacoras]);
+
+  const saludo = saludoKey();
+
+  const tarjetas = [
+    { id: "horario" as Vista, nombre: t("sec.horario"), desc: t("sec.horario.desc"), color: colores.horario },
+    { id: "ausencias" as Vista, nombre: t("sec.ausencias"), desc: t("sec.ausencias.desc"), color: colores.ausencias },
+    { id: "calificaciones" as Vista, nombre: t("sec.calificaciones"), desc: t("sec.calificaciones.desc"), color: colores.calificaciones },
+    { id: "bitacoras" as Vista, nombre: t("sec.bitacoras"), desc: t("sec.bitacoras.desc"), color: colores.bitacoras },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <section className="rounded-xl border border-borde bg-card p-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-sub">{t(saludo)}</p>
+        <h1 className="mt-1 text-2xl font-bold">{t("home.resumen")}</h1>
+        <p className="mt-1 text-sm text-sub">{t("home.sub")}</p>
+        <p className="mt-2 text-sm text-sub">
+          {t("home.info", stats.materias.length, stats.clasesSemana)}
+        </p>
+        {stats.prox && (
+          <div
+            className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-white"
+            style={{ backgroundColor: colores.acento }}
+          >
+            <span>
+              <Icono nombre="horario" className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <b>{t("home.siguiente")}</b> {nombreMateria(stats.prox.materia)} · {stats.prox.hora}
+            </span>
+          </div>
+        )}
+        <button
+          onClick={() => alNavegar("horario")}
+          className="mt-3 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          style={{ backgroundColor: colores.acento }}
+        >
+          <Icono nombre="horario" className="h-4 w-4" />
+          {t("home.verHorario")}
+        </button>
+      </section>
+
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <MiniStat etiqueta={t("stat.asistencias")} valor={`✓ ${stats.presentes}`} sub={t("stat.faltas", stats.faltas)} color="#10B981" />
+        <MiniStat etiqueta={t("stat.promedio")} valor={stats.promedio === null ? "—" : redondear(stats.promedio, 1)} sub={t("stat.general")} color={colores.calificaciones} />
+        <MiniStat etiqueta={t("stat.bitacoras")} valor={stats.nBitacoras} sub={t("stat.registradas")} color={colores.bitacoras} />
+        <MiniStat etiqueta={t("stat.semana")} valor={stats.clasesSemana} sub={t("stat.clases")} color={colores.horario} />
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {tarjetas.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => alNavegar(c.id)}
+            className="flex w-full items-center gap-3 rounded-xl border border-borde bg-card p-3.5 text-left transition-transform active:scale-[0.99]"
+          >
+            <span
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-white"
+              style={{ backgroundColor: c.color }}
+            >
+              <Icono nombre={c.id as NombreIcono} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">{c.nombre}</span>
+              <span className="block text-xs text-sub">{c.desc}</span>
+            </span>
+            <Icono nombre="flecha" className="h-4 w-4 shrink-0 text-sub" />
+          </button>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function saludoKey(): string {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "home.dias";
+  if (h >= 12 && h < 19) return "home.tardes";
+  return "home.noches";
+}
+
+function MiniStat({
+  etiqueta,
+  valor,
+  sub,
+  color,
+}: {
+  etiqueta: string;
+  valor: string | number;
+  sub: string;
+  color: string;
+}) {
+  return (
+    <div className="rounded-xl border border-borde bg-card p-3">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-sub">{etiqueta}</p>
+      <p className="mt-0.5 text-2xl font-bold" style={{ color }}>{valor}</p>
+      <p className="text-[11px] text-sub">{sub}</p>
+    </div>
+  );
+}

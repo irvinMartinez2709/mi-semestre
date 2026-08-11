@@ -1,0 +1,148 @@
+import { useAjustes } from "../contexto/Ajustes";
+import type { KColor } from "../contexto/Ajustes";
+import { estilos } from "./UI";
+import { Icono } from "./Icono";
+import { VolverInicio } from "./VolverInicio";
+import type { Vista } from "../types";
+
+const CLAVE_COLOR: { clave: KColor; traduccion: string }[] = [
+  { clave: "acento", traduccion: "cfg.color.acento" },
+  { clave: "hoy", traduccion: "cfg.color.hoy" },
+  { clave: "futura", traduccion: "cfg.color.futura" },
+  { clave: "horario", traduccion: "cfg.color.horario" },
+  { clave: "ausencias", traduccion: "cfg.color.ausencias" },
+  { clave: "calificaciones", traduccion: "cfg.color.calificaciones" },
+  { clave: "bitacoras", traduccion: "cfg.color.bitacoras" },
+  { clave: "config", traduccion: "cfg.color.config" },
+  { clave: "asistPresente", traduccion: "cfg.color.asistPresente" },
+  { clave: "asistParcial", traduccion: "cfg.color.asistParcial" },
+  { clave: "asistAusencia", traduccion: "cfg.color.asistAusencia" },
+  { clave: "asistFeriado", traduccion: "cfg.color.asistFeriado" },
+];
+
+export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
+  const { t, idioma, fijarIdioma, tema, alternarTema, colores, fijarColor, esPorDefecto, restablecerColores } = useAjustes();
+
+  const oscuro = tema === "oscuro";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-bold">{t("cfg.titulo")}</h1>
+          <p className="mt-0.5 text-xs text-sub">{t("cfg.sub")}</p>
+        </div>
+        <VolverInicio alNavegar={alNavegar} />
+      </div>
+
+      <section className="rounded-xl border border-borde bg-card p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-lg text-white" style={{ backgroundColor: colores.config }}>
+              <Icono nombre={oscuro ? "luna" : "sol"} />
+            </span>
+            <div>
+              <p className="font-semibold">{t("cfg.tema")}</p>
+              <p className="text-xs text-sub">{oscuro ? t("cfg.temaOscuro") : t("cfg.temaClaro")}</p>
+            </div>
+          </div>
+          <button
+            onClick={alternarTema}
+            aria-label="Cambiar tema"
+            className="relative h-7 w-12 rounded-full transition-colors"
+            style={{ backgroundColor: oscuro ? colores.config : colores.acento }}
+          >
+            <span className={`absolute top-1 left-1 grid h-5 w-5 place-items-center rounded-full bg-white transition-all ${oscuro ? "translate-x-5" : ""}`}>
+              <Icono nombre={oscuro ? "luna" : "sol"} className="h-3.5 w-3.5" />
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-borde bg-card p-4">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-lg text-white" style={{ backgroundColor: colores.acento }}>
+            <Icono nombre="config" />
+          </span>
+          <div>
+            <p className="font-semibold">{t("cfg.idioma")}</p>
+            <p className="text-xs text-sub">{t("cfg.idioma.sub")}</p>
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            onClick={() => fijarIdioma("es")}
+            className={`rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors ${
+              idioma === "es" ? "border-transparent text-white" : "border-borde text-tinta hover:border-acento"
+            }`}
+            style={idioma === "es" ? { backgroundColor: colores.acento } : undefined}
+          >
+            🇪🇸 Español
+          </button>
+          <button
+            onClick={() => fijarIdioma("en")}
+            className={`rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors ${
+              idioma === "en" ? "border-transparent text-white" : "border-borde text-tinta hover:border-acento"
+            }`}
+            style={idioma === "en" ? { backgroundColor: colores.acento } : undefined}
+          >
+            🇺🇸 English
+          </button>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-borde bg-card p-4">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="font-semibold">{t("cfg.colores")}</p>
+            <p className="text-xs text-sub">{t("cfg.colores.sub")}</p>
+          </div>
+          {!esPorDefecto && (
+            <button onClick={restablecerColores} className={`${estilos.boton} ${estilos.secundario} px-3 py-1.5 text-xs`}>
+              {t("cfg.restablecer")}
+            </button>
+          )}
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {CLAVE_COLOR.map((c) => (
+            <label key={c.clave} className="flex items-center gap-2 rounded-lg border border-borde px-2.5 py-2">
+              <input
+                type="color"
+                value={colores[c.clave]}
+                onChange={(e) => fijarColor(c.clave, e.target.value)}
+                className="h-7 w-9 shrink-0 cursor-pointer rounded border-0 bg-transparent p-0"
+                aria-label={t(c.traduccion)}
+              />
+              <span className="min-w-0 flex-1 truncate text-xs font-semibold">{t(c.traduccion)}</span>
+              <span className="shrink-0 font-mono text-[10px] text-sub">{colores[c.clave].toUpperCase()}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-borde bg-card p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-sub">{t("cfg.acercaDe")}</p>
+        <dl className="mt-3 space-y-2 text-sm">
+          <div className="flex justify-between gap-2">
+            <dt className="text-sub">{t("cfg.nombre")}</dt>
+            <dd className="font-semibold">{t("app.titulo")}</dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt className="text-sub">{t("cfg.version")}</dt>
+            <dd className="font-semibold">0.2.0</dd>
+          </div>
+          <div className="flex justify-between gap-2">
+            <dt className="text-sub">{t("cfg.plataforma")}</dt>
+            <dd className="font-semibold">Web · Android</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="rounded-xl border border-borde bg-card2 p-4 text-center">
+        <p className="text-xs text-sub">{t("cfg.local")}</p>
+      </section>
+
+      <VolverInicio alNavegar={alNavegar} />
+    </div>
+  );
+}

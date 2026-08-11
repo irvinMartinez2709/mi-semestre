@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --c-fondo: 244 246 248;
+  --c-card: 255 255 255;
+  --c-card2: 238 242 246;
+  --c-borde: 214 220 228;
+  --c-tinta: 27 36 48;
+  --c-sub: 100 116 139;
+  --c-acento: 46 124 246;
+  --c-hoy: 22 163 74;
+  --c-futura: 125 211 252;
+  --c-horario: 15 163 163;
+  --c-ausencias: 245 158 11;
+  --c-calificaciones: 139 92 246;
+  --c-bitacoras: 236 72 153;
+  --c-config: 100 116 139;
+}
+
+.dark {
+  --c-fondo: 15 20 25;
+  --c-card: 23 30 38;
+  --c-card2: 30 38 48;
+  --c-borde: 38 48 60;
+  --c-tinta: 230 235 240;
+  --c-sub: 138 150 163;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-fondo text-tinta font-sans antialiased;
+  margin: 0;
+  min-height: 100vh;
+  font-size: 16px;
+}
+
+input,
+select,
+textarea,
+button {
+  font-size: 16px;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+.scroll-slim::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scroll-slim::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgb(var(--c-borde));
+}
+
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}

@@ -55,11 +55,24 @@ jobs:
         working-directory: web
         run: npx cap sync android
 
-      - name: Generate PNG icons from SVG
+      - name: Generate PNG icons from source image
         working-directory: web
         run: |
           npm install --no-save sharp
-          node -e "const s=require('sharp');const fs=require('fs');fs.mkdirSync('assets/icon/only',{recursive:true});fs.mkdirSync('assets/splash/only',{recursive:true});(async()=>{await s('public/icono-app.svg').resize(1024,1024).png().toFile('assets/icon/only/icon.png');await s('public/icono-app.svg').resize(2732,2732).png().toFile('assets/splash/only/splash.png');console.log(' PNG generados');})().catch(e=>{console.error(e);process.exit(1)})"
+          node -e "
+            const s=require('sharp');const fs=require('fs');
+            fs.mkdirSync('assets/icon/only',{recursive:true});
+            fs.mkdirSync('assets/splash/only',{recursive:true});
+            const src='public/icono-app.png';
+            (async()=>{
+              await s(src).resize(1024,1024,{fit:'cover'}).png().toFile('assets/icon/only/icon.png');
+              const fg=await s(src).resize(1024,1024,{fit:'cover'}).png().toBuffer();
+              await s({create:{width:1024,height:1024,channels:4,background:{r:46,g:124,b:246,alpha:1}}}).png().toFile('assets/icon/only/icon-background.png');
+              await s(fg).resize(645,645,{fit:'cover'}).extend({top:189,bottom:190,left:189,right:190,background:{r:0,g:0,b:0,alpha:0}}).png().toFile('assets/icon/only/icon-foreground.png');
+              await s(src).resize(2732,2732,{fit:'cover'}).png().toFile('assets/splash/only/splash.png');
+              console.log(' PNG generados');
+            })().catch(e=>{console.error(e);process.exit(1)})
+          "
           npx --yes @capacitor/assets generate --android
 
       - name: Build debug APK

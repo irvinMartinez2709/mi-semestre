@@ -1,4 +1,4 @@
-export const VERSION = "1.1.1";
+export const VERSION = "1.1.2";
 export const CLAVE_VERSION = "ms.version.v1";
 export const CLAVE_HORARIO = "ms.horario.v1";
 export const CLAVE_MATERIAS = "ms.materias.v1";

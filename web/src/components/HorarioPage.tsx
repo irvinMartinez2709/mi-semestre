@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { DIAS, aMinutos, claseActiva, diaDeHoy, hoyMinutos, nombreMateria } from "../lib/hora";
+import { DIAS, aMinutos, aMinutosRango, claseActiva, diaDeHoy, hoyMinutos, nombreMateria } from "../lib/hora";
 import { materiasActivas, colorDeMateria } from "../lib/materias";
 import { useHorario } from "../hooks/useHorario";
 import { useMaterias } from "../hooks/useMaterias";
@@ -16,12 +16,11 @@ function estadoDe(diaIdx: number, hora: string): EstadoCelda {
   const diaReal = diaIdx + 1;
   if (diaReal < hoyDia) return "pasada";
   if (diaReal > hoyDia) return "futura";
+  const r = aMinutosRango(hora);
+  if (!r) return "futura";
   const ahora = hoyMinutos();
-  const [i, f] = hora.split("-");
-  const ini = aMinutos(i);
-  const fin = aMinutos(f);
-  if (ahora < ini) return "futura";
-  if (ahora > fin) return "pasada";
+  if (ahora < r.ini) return "futura";
+  if (ahora > r.fin) return "pasada";
   return "actual";
 }
 
@@ -37,6 +36,12 @@ export function HorarioPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
   const { horario, agregarClase, editarClase, eliminarClase } = useHorario();
   const { materias } = useMaterias();
   const [form, setForm] = useState<FormEstado | null>(null);
+
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const franjas = useMemo(() => {
     const set = new Set<string>();

@@ -15,18 +15,28 @@ export function diaDeHoy(): Dia | null {
 }
 
 const regexHora =
-  /^(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})(AM|PM)$/i;
+  /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM)$/i;
+
+export function aMinutosRango(
+  hora: string
+): { ini: number; fin: number } | null {
+  const limpia = hora.replace(/\./g, "").trim();
+  const m = limpia.match(regexHora);
+  if (!m) return null;
+  const mer = m[5].toUpperCase();
+  const resolver = (h: number, mi: number) => {
+    if (mer === "PM" && h !== 12) h += 12;
+    if (mer === "AM" && h === 12) h = 0;
+    return h * 60 + mi;
+  };
+  return {
+    ini: resolver(parseInt(m[1], 10), parseInt(m[2], 10)),
+    fin: resolver(parseInt(m[3], 10), parseInt(m[4], 10)),
+  };
+}
 
 export function aMinutos(hora: string): number {
-  const limpia = hora.replace(/\./g, "");
-  const m = limpia.match(regexHora);
-  if (!m) return 0;
-  let h1 = parseInt(m[1], 10);
-  const min = parseInt(m[2], 10);
-  const mer = m[5].toUpperCase();
-  if (mer === "PM" && h1 !== 12) h1 += 12;
-  if (mer === "AM" && h1 === 12) h1 = 0;
-  return h1 * 60 + min;
+  return aMinutosRango(hora)?.ini ?? 0;
 }
 
 export interface ClaseActiva {
@@ -40,8 +50,8 @@ export function claseActiva(lista: Clase[], ahoraMin: number): ClaseActiva {
     .sort((a, b) => aMinutos(a.hora) - aMinutos(b.hora));
   const actual =
     lista.find((c) => {
-      const [i, f] = c.hora.split("-");
-      return ahoraMin >= aMinutos(i) && ahoraMin < aMinutos(f);
+      const r = aMinutosRango(c.hora);
+      return r !== null && ahoraMin >= r.ini && ahoraMin < r.fin;
     }) ?? null;
   return { actual, proxima: restantes[0] ?? null };
 }

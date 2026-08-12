@@ -179,6 +179,7 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
   const MARGEN = 14;
   const ANCHO = 210 - MARGEN * 2;
   const PIE = 285;
+  const LIMITE = PIE - 14;
 
   const encabezado = (g: jsPDF) => {
     g.setFont("helvetica", "bold");
@@ -193,6 +194,32 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
   encabezado(doc);
 
   let y = 24;
+
+  const nuevaPagina = () => {
+    doc.addPage();
+    y = 24;
+    encabezado(doc);
+  };
+
+  const asegurarEspacio = (alto: number) => {
+    if (y + alto > LIMITE) nuevaPagina();
+  };
+
+  const envolver = (g: jsPDF, s: string, anchoMax: number): string[] => {
+    const lineas: string[] = [];
+    let actual = "";
+    for (const palabra of s.split(/\s+/)) {
+      const prueba = actual ? `${actual} ${palabra}` : palabra;
+      if (g.getTextWidth(prueba) <= anchoMax) actual = prueba;
+      else {
+        if (actual) lineas.push(actual);
+        actual = palabra;
+      }
+    }
+    if (actual) lineas.push(actual);
+    return lineas.length ? lineas : [""];
+  };
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
   doc.text(t("pdf.titulo"), MARGEN, y);
@@ -204,24 +231,31 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
   y += 12;
 
   const titulo = (texto: string) => {
+    asegurarEspacio(10);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(30);
-    doc.text(texto, MARGEN, y);
+    for (const linea of envolver(doc, texto, ANCHO)) {
+      doc.text(linea, MARGEN, y);
+      y += 6;
+    }
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(0);
-    y += 6;
   };
 
   const texto = (s: string) => {
-    doc.text(s, MARGEN, y);
-    y += 5;
+    for (const linea of envolver(doc, s, ANCHO)) {
+      asegurarEspacio(5);
+      doc.text(linea, MARGEN, y);
+      y += 5;
+    }
   };
 
   const despuesDeTabla = () => {
     const ultima = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY;
-    y = Math.max(y, (ultima ?? y) + 8);
+    if (ultima !== undefined) y = ultima + 8;
+    if (y > LIMITE) nuevaPagina();
   };
 
   // 1) Materias
@@ -229,6 +263,7 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
   if (materias.length === 0) {
     texto(t("pdf.sinDatos"));
   } else {
+    asegurarEspacio(20);
     autoTable(doc, {
       startY: y,
       head: [[t("pdf.materia"), t("pdf.horas"), t("pdf.creditos"), t("pdf.profesor")]],
@@ -254,6 +289,7 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
   if (clases.length === 0) {
     texto(t("pdf.sinDatos"));
   } else {
+    asegurarEspacio(20);
     autoTable(doc, {
       startY: y,
       head: [[t("pdf.dia"), t("pdf.hora"), t("pdf.materia"), t("pdf.aula"), t("pdf.profesor")]],
@@ -298,6 +334,7 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
           estadoTexto,
         ]);
       }
+      asegurarEspacio(20);
       autoTable(doc, {
         startY: y,
         head: [[t("pdf.semana", s.numero), t("pdf.fecha"), t("pdf.materia"), t("pdf.estado")]],
@@ -332,6 +369,7 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
       const secciones = porMateria[nombre] ?? [];
       const prom = promedioMateria(secciones);
       titulo(nombre);
+      asegurarEspacio(20);
       autoTable(doc, {
         startY: y,
         head: [[t("pdf.seccion"), t("pdf.porcentaje"), t("pdf.calificacionesSub"), t("pdf.promedio"), t("pdf.letra")]],
@@ -367,6 +405,7 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
   if (bitacoras.length === 0) {
     texto(t("pdf.sinDatos"));
   } else {
+    asegurarEspacio(20);
     autoTable(doc, {
       startY: y,
       head: [[t("pdf.fecha"), t("pdf.materia"), t("pdf.tituloBit"), t("pdf.contenido")]],
@@ -393,6 +432,7 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
     });
   }
 
+  if (y > PIE - 12) nuevaPagina();
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(150);

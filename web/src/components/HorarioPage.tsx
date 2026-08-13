@@ -151,7 +151,11 @@ export function HorarioPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
                   return (
                     <td key={dia} className="p-0.5">
                       {clase ? (
-                        <Celda clase={clase} estado={estadoDe(i, hora)} />
+                        <Celda
+                          clase={clase}
+                          estado={estadoDe(i, hora)}
+                          profesor={profesores.get(nombreMateria(clase.materia)) || clase.profesor || ""}
+                        />
                       ) : (
                         <div className="min-h-11 rounded-md bg-card2/50" />
                       )}
@@ -223,14 +227,24 @@ export function HorarioPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
   );
 }
 
-function Celda({ clase, estado }: { clase: Clase; estado: EstadoCelda }) {
+function Celda({
+  clase,
+  estado,
+  profesor,
+}: {
+  clase: Clase;
+  estado: EstadoCelda;
+  profesor?: string;
+}) {
   const { colores, tema } = useAjustes();
   const nombre = nombreMateria(clase.materia);
+  const nomProfesor = profesor?.trim() || "";
   if (estado === "actual") {
     return (
       <div className="min-h-11 rounded-md px-1 py-1 text-white" style={{ backgroundColor: colores.hoy }}>
         <p className="truncate text-[11px] font-bold">{nombre}</p>
         <p className="text-[9px] uppercase opacity-80">{clase.aula}</p>
+        {nomProfesor && <p className="truncate text-[8px] opacity-70">{nomProfesor}</p>}
       </div>
     );
   }
@@ -239,6 +253,7 @@ function Celda({ clase, estado }: { clase: Clase; estado: EstadoCelda }) {
       <div className="min-h-11 rounded-md bg-card2 px-1 py-1 opacity-60">
         <p className="truncate text-[11px] font-semibold text-sub">{nombre}</p>
         <p className="text-[9px] uppercase text-sub/80">{clase.aula}</p>
+        {nomProfesor && <p className="truncate text-[8px] text-sub/70">{nomProfesor}</p>}
       </div>
     );
   }
@@ -251,6 +266,7 @@ function Celda({ clase, estado }: { clase: Clase; estado: EstadoCelda }) {
         {nombre}
       </p>
       <p className="text-[9px] uppercase text-sub">{clase.aula}</p>
+      {nomProfesor && <p className="truncate text-[8px] text-sub">{nomProfesor}</p>}
     </div>
   );
 }
@@ -276,13 +292,11 @@ function FormClase({
   const [hora, setHora] = useState("");
   const [materia, setMateria] = useState("");
   const [aula, setAula] = useState("");
-  const [profesor, setProfesor] = useState("");
 
   useEffect(() => {
     setHora(form?.clase?.hora ?? "");
     setMateria(form?.clase?.materia ?? "");
     setAula(form?.clase?.aula ?? "");
-    setProfesor(form?.clase?.profesor ?? "");
   }, [form]);
 
   if (!form) return null;
@@ -296,7 +310,6 @@ function FormClase({
       hora: hora.trim(),
       materia: materia.trim(),
       aula: aula.trim() || "—",
-      profesor: profesor.trim(),
     });
   };
 
@@ -325,10 +338,6 @@ function FormClase({
         <div>
           <label className="mb-1 block text-xs font-semibold text-sub">{t("hor.form.aula")}</label>
           <input className={estilos.inputClase} value={aula} onChange={(e) => setAula(e.target.value)} placeholder={t("hor.placeholder.aula")} />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold text-sub">{t("hor.form.profesor")}</label>
-          <input className={estilos.inputClase} value={profesor} onChange={(e) => setProfesor(e.target.value)} placeholder={t("hor.placeholder.profesor")} />
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <button onClick={onCerrar} className={`${estilos.boton} ${estilos.secundario}`}>{t("comun.cancelar")}</button>

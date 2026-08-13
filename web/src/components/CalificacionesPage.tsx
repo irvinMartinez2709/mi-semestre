@@ -2,24 +2,16 @@ import { useMemo, useState } from "react";
 import { useCalificaciones } from "../hooks/useCalificaciones";
 import { useHorario } from "../hooks/useHorario";
 import { useMaterias } from "../hooks/useMaterias";
-import { useAusencias } from "../hooks/useAusencias";
 import { colorDeMateria, materiasActivas } from "../lib/materias";
 import { redondear } from "../lib/storage";
 import {
-  bajarLetra,
   colorDeLetra,
   indiceAcademico,
   letraDeNota,
   promSeccion,
   promedioMateria,
   promedioPonderado,
-  type Letra,
 } from "../lib/utp";
-import {
-  limitesAsistencia,
-  type EstadoLimiteAsistencia,
-  type LimiteAsistencia,
-} from "../lib/asistencia";
 import { useAjustes, useConfirmar } from "../contexto/Ajustes";
 import { Chips, estilos, IconoBoton, Modal } from "./UI";
 import type { Calificacion, SeccionNota, Vista } from "../types";
@@ -31,7 +23,6 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
   const { horario } = useHorario();
   const materiasHook = useMaterias();
   const cal = useCalificaciones();
-  const { semanas } = useAusencias();
   const materiasAct = materiasActivas(horario, materiasHook.materias);
   const [seleccion, setSeleccion] = useState<string>("");
   const activa = seleccion || materiasAct[0]?.nombre || "";
@@ -52,12 +43,6 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
 
   const indice = indiceAcademico(cal.porMateria, creditos);
   const ponderado = promedioPonderado(cal.porMateria, creditos);
-
-  const limites = useMemo(
-    () => limitesAsistencia(horario, semanas, creditos),
-    [horario, semanas, creditos]
-  );
-  const limiteActiva = limites.find((l) => l.materia === activa);
 
   const fijarCreditosGlobal = (nombre: string, n: number) => {
     const existe = materiasHook.materias.some(
@@ -157,8 +142,6 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
           </button>
         </div>
         <p className="mt-1 text-[11px] text-sub">{t("cal.pesos", pesos)}</p>
-
-        {limiteActiva && <AsistenciaResumen l={limiteActiva} prom={prom.promedio} t={t} />}
       </section>
 
       {pesos > 100 && (
@@ -243,60 +226,6 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
       <VolverInicio alNavegar={alNavegar} />
     </div>
   );
-}
-
-function AsistenciaResumen({
-  l,
-  prom,
-  t,
-}: {
-  l: LimiteAsistencia;
-  prom: number | null;
-  t: (clave: string, ...args: (string | number)[]) => string;
-}) {
-  const color = colorLimite(l.estado);
-  const mensaje =
-    l.estado === "baja"
-      ? t("cal.asist.baja")
-      : l.estado === "perdida"
-        ? t("cal.asist.perdida")
-        : t("cal.asist.ok");
-  const letra: Letra | null =
-    prom === null ? null : letraDeNota(prom);
-  const efectiva: Letra | null =
-    l.estado === "perdida" ? "F" : l.estado === "baja" && letra ? bajarLetra(letra) : letra;
-
-  return (
-    <div className="mt-3 rounded-lg border border-borde px-3 py-2">
-      <div className="flex items-center gap-2">
-        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-        <p className="text-xs font-semibold">{t("cal.asistencia")}</p>
-        <span className="ml-auto shrink-0 text-[11px] font-bold" style={{ color }}>
-          {t("cal.asist.porcentaje", redondear(l.porcentaje, 1))}
-        </span>
-      </div>
-      <p className="mt-0.5 text-[11px] text-sub">{mensaje}</p>
-      {efectiva && (
-        <p className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold">
-          {l.estado === "ok" ? t("cal.asist.letraSin") : t("cal.asist.letraEfect", efectiva)}
-          {l.estado !== "ok" && (
-            <span
-              className="inline-grid h-6 w-6 place-items-center rounded-md text-[11px] font-bold text-white"
-              style={{ backgroundColor: colorDeLetra(efectiva) }}
-            >
-              {efectiva}
-            </span>
-          )}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function colorLimite(e: EstadoLimiteAsistencia): string {
-  if (e === "baja") return "#F59E0B";
-  if (e === "perdida") return "#EF4444";
-  return "#10B981";
 }
 
 function Titulo({ alNavegar }: { alNavegar: (v: Vista) => void }) {

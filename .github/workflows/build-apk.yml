@@ -93,12 +93,16 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: ./gradlew assembleRelease
 
+      - name: Renombrar APK (formato Mi-Semestre-<version>.apk)
+        working-directory: web/android/app/build/outputs/apk/release
+        run: mv app-release.apk "Mi-Semestre-${APP_VERSION}.apk"
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: mi-semestre-apk
           path: |
-            web/android/app/build/outputs/apk/release/app-release.apk
+            web/android/app/build/outputs/apk/release/Mi-Semestre-${{ env.APP_VERSION }}.apk
           if-no-files-found: error
 
       - name: Eliminar release anterior de esta versión (reemplazo limpio)
@@ -128,5 +132,5 @@ jobs:
         with:
           name: "Mi Semestre ${{ env.APP_VERSION }}"
           tag_name: "${{ env.APP_VERSION }}"
-          files: web/android/app/build/outputs/apk/release/app-release.apk
+          files: web/android/app/build/outputs/apk/release/Mi-Semestre-${{ env.APP_VERSION }}.apk
           update_release: true

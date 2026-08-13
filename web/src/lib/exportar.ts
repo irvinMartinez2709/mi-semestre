@@ -6,7 +6,7 @@ import { cargar } from "./storage";
 import { DIAS, nombreMateria } from "./hora";
 import { materiasActivas } from "./materias";
 import { formatoFechaCorta, sumarDiasISO } from "./fechas";
-import { estadoDeDia } from "./asistencia";
+import { claveFeriado } from "./asistencia";
 import { indiceAcademico, letraDeNota, promSeccion, promedioMateria } from "./utp";
 import type { CalificacionesPorMateria, Horario, Materia, Semana, Bitacora } from "../types";
 import type { jsPDF } from "jspdf";
@@ -170,6 +170,7 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
   });
   const catalogo = cargar<Materia[]>(CLAVE_MATERIAS, []);
   const materias = materiasActivas(horario, catalogo);
+  const profesores = new Map(materias.map((m) => [m.nombre, m.profesor || ""]));
   const semanas = cargar<Semana[]>(CLAVE_AUSENCIAS, []);
   const porMateria = cargar<CalificacionesPorMateria>(CLAVE_CALIFICACIONES, {});
   const creditos = cargar<Record<string, number>>(CLAVE_CREDITOS, {});
@@ -282,7 +283,7 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
   const clases: Array<[string, string, string, string, string]> = [];
   for (const dia of DIAS) {
     for (const c of horario[dia]) {
-      clases.push([o.dias[DIAS.indexOf(dia) + 1], c.hora, nombreMateria(c.materia), c.aula, c.profesor || "—"]);
+      clases.push([o.dias[DIAS.indexOf(dia) + 1], c.hora, nombreMateria(c.materia), c.aula, profesores.get(nombreMateria(c.materia)) || c.profesor || "—"]);
     }
   }
   clases.sort((a, b) => o.dias.indexOf(a[0]) - o.dias.indexOf(b[0]) || a[1].localeCompare(b[1]));
@@ -314,38 +315,44 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
     for (const s of semanasOrden) {
       const filas: Array<[string, string, string, string]> = [];
       for (const dia of DIAS) {
-        const claves = (horario[dia] ?? []).map((c) => `${dia}|${c.hora}`);
-        if (claves.length === 0) continue;
-        const e = estadoDeDia(s.registros, dia, claves);
-        const estadoTexto =
-          e === "presente"
-            ? t("pdf.presente")
-            : e === "falta"
-              ? t("pdf.falta")
-              : e === "feriado"
-                ? t("pdf.feriado")
-                : t("pdf.pendiente");
-        if (e === "presente") totalPres++;
-        if (e === "falta") totalFaltas++;
-        filas.push([
-          o.dias[DIAS.indexOf(dia) + 1],
-          formatoFechaCorta(sumarDiasISO(s.inicio, DIAS.indexOf(dia)), o.locale),
-          nombreMateria((horario[dia][0] ?? { materia: "—" }).materia),
-          estadoTexto,
-        ]);
+        const clasesDia = horario[dia] ?? [];
+        if (clasesDia.length === 0) continue;
+        const feriado = s.registros[claveFeriado(dia)] === true;
+        for (const c of clasesDia) {
+          const estadoTexto =
+            feriado
+              ? t("pdf.feriado")
+              : s.registros[`${dia}|${c.hora}`] === true
+                ? t("pdf.presente")
+                : s.registros[`${dia}|${c.hora}`] === false
+                  ? t("pdf.falta")
+                  : t("pdf.pendiente");
+          if (!feriado) {
+            if (s.registros[`${dia}|${c.hora}`] === true) totalPres++;
+            else if (s.registros[`${dia}|${c.hora}`] === false) totalFaltas++;
+          }
+          filas.push([
+            o.dias[DIAS.indexOf(dia) + 1],
+            formatoFechaCorta(sumarDiasISO(s.inicio, DIAS.indexOf(dia)), o.locale),
+            nombreMateria(c.materia),
+            estadoTexto,
+          ]);
+        }
       }
-      asegurarEspacio(20);
-      autoTable(doc, {
-        startY: y,
-        head: [[t("pdf.semana", s.numero), t("pdf.fecha"), t("pdf.materia"), t("pdf.estado")]],
-        body: filas,
-        theme: "grid",
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: AZUL, textColor: 255 },
-        margin: { left: MARGEN, right: MARGEN },
-        didDrawPage: () => encabezado(doc),
-      });
-      despuesDeTabla();
+      if (filas.length > 0) {
+        asegurarEspacio(20);
+        autoTable(doc, {
+          startY: y,
+          head: [[t("pdf.semana", s.numero), t("pdf.fecha"), t("pdf.materia"), t("pdf.estado")]],
+          body: filas,
+          theme: "grid",
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: AZUL, textColor: 255 },
+          margin: { left: MARGEN, right: MARGEN },
+          didDrawPage: () => encabezado(doc),
+        });
+        despuesDeTabla();
+      }
     }
     doc.setFont("helvetica", "bold");
     texto(`${t("pdf.presente")}: ${totalPres}  ·  ${t("pdf.falta")}: ${totalFaltas}`);

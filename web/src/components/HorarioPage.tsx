@@ -53,6 +53,14 @@ export function HorarioPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
   const activas = hoy ? claseActiva(horario[hoy], hoyMinutos()) : null;
   const total = DIAS.reduce((n, d) => n + horario[d].length, 0);
 
+  const profesores = useMemo(() => {
+    const mapa = new Map<string, string>();
+    for (const m of materiasActivas(horario, materias)) {
+      if (m.profesor) mapa.set(m.nombre, m.profesor);
+    }
+    return mapa;
+  }, [horario, materias]);
+
   const guardarClase = (clase: Clase) => {
     if (!form) return;
     if (form.clase && form.indice !== undefined) editarClase(form.dia, form.indice, clase);
@@ -194,7 +202,7 @@ export function HorarioPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
                           {c.materia}
                         </p>
                         <p className="truncate text-[10px] text-sub">
-                          {t("hor.aula", c.aula)} · {c.profesor?.trim() || "—"}
+                          {t("hor.aula", c.aula)} · {profesores.get(nombreMateria(c.materia)) || c.profesor?.trim() || "—"}
                         </p>
                       </div>
                       <span className="flex shrink-0 gap-1">

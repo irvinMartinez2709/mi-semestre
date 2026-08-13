@@ -39,6 +39,19 @@ export function useMaterias() {
     return true;
   };
 
+  // Actualiza solo los créditos de una materia del catálogo. Es la fuente
+  // de verdad para el índice académico y los límites de faltas.
+  const fijarCreditos = (nombre: string, n: number) => {
+    const cr = Math.max(0, Math.min(30, Math.round(n)));
+    persistir(
+      materias.map((m) =>
+        (m.nombre || "").trim() === (nombre || "").trim()
+          ? { ...m, creditos: cr }
+          : m
+      )
+    );
+  };
+
   // Renombra la materia en el catálogo y en todas las secciones vinculadas
   // (horario, calificaciones, créditos y bitácoras).
   const editarMateria = (antes: string, datos: Materia) => {
@@ -159,6 +172,7 @@ export function useMaterias() {
   return {
     materias,
     agregarMateria,
+    fijarCreditos,
     editarMateria,
     eliminarMateria,
   };

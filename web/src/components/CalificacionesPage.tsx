@@ -1,16 +1,25 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useCalificaciones } from "../hooks/useCalificaciones";
 import { useHorario } from "../hooks/useHorario";
 import { useMaterias } from "../hooks/useMaterias";
+import { useAusencias } from "../hooks/useAusencias";
 import { colorDeMateria, materiasActivas } from "../lib/materias";
 import { redondear } from "../lib/storage";
 import {
+  bajarLetra,
   colorDeLetra,
   indiceAcademico,
   letraDeNota,
   promSeccion,
   promedioMateria,
+  promedioPonderado,
+  type Letra,
 } from "../lib/utp";
+import {
+  limitesAsistencia,
+  type EstadoLimiteAsistencia,
+  type LimiteAsistencia,
+} from "../lib/asistencia";
 import { useAjustes, useConfirmar } from "../contexto/Ajustes";
 import { Chips, estilos, IconoBoton, Modal } from "./UI";
 import type { Calificacion, SeccionNota, Vista } from "../types";
@@ -20,9 +29,10 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
   const { t, colores } = useAjustes();
   const { confirmar } = useConfirmar();
   const { horario } = useHorario();
-  const { materias } = useMaterias();
+  const materiasHook = useMaterias();
   const cal = useCalificaciones();
-  const materiasAct = materiasActivas(horario, materias);
+  const { semanas } = useAusencias();
+  const materiasAct = materiasActivas(horario, materiasHook.materias);
   const [seleccion, setSeleccion] = useState<string>("");
   const activa = seleccion || materiasAct[0]?.nombre || "";
 
@@ -33,7 +43,30 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
   const secciones = activa ? cal.seccionesDe(activa) : [];
   const prom = promedioMateria(secciones);
   const pesos = secciones.reduce((a, s) => a + s.porcentaje, 0);
-  const indice = indiceAcademico(cal.porMateria, cal.creditos);
+
+  const creditos = useMemo(() => {
+    const m: Record<string, number> = { ...cal.creditos };
+    for (const ma of materiasAct) m[ma.nombre] = ma.creditos ?? 3;
+    return m;
+  }, [materiasAct, cal.creditos]);
+
+  const indice = indiceAcademico(cal.porMateria, creditos);
+  const ponderado = promedioPonderado(cal.porMateria, creditos);
+
+  const limites = useMemo(
+    () => limitesAsistencia(horario, semanas, creditos),
+    [horario, semanas, creditos]
+  );
+  const limiteActiva = limites.find((l) => l.materia === activa);
+
+  const fijarCreditosGlobal = (nombre: string, n: number) => {
+    const existe = materiasHook.materias.some(
+      (m) =>
+        (m.nombre || "").trim().toUpperCase() === (nombre || "").trim().toUpperCase()
+    );
+    if (existe) materiasHook.fijarCreditos(nombre, n);
+    else cal.fijarCreditos(nombre, n);
+  };
 
   const disponible = (sec?: SeccionNota): number => {
     const otras = secciones
@@ -58,21 +91,41 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
       <Titulo alNavegar={alNavegar} />
 
       <section className="rounded-xl border border-borde bg-card p-4">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-sub">{t("cal.indice")}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-sub">{t("cal.indice")}</p>
+        <div className="mt-1 flex flex-wrap items-start gap-6">
+          <div>
             <p className="text-3xl font-bold" style={{ color: colores.calificaciones }}>
               {indice.indice === null ? "—" : redondear(indice.indice, 2)}
             </p>
-            <p className="text-[11px] text-sub">
-              {t("cal.indice.sub")} · {t("cal.creditos")}: {indice.creditos}
-            </p>
+            <p className="text-[11px] text-sub">{t("cal.indice.sub")}</p>
           </div>
-          <button onClick={() => setModalCreditos(true)} className={`${estilos.boton} ${estilos.secundario} shrink-0 px-3 py-1.5 text-xs`}>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-sub">{t("cal.ponderado")}</p>
+            <p className="text-2xl font-bold" style={{ color: colores.calificaciones }}>
+              {ponderado === null ? "—" : `${redondear(ponderado, 1)}%`}
+            </p>
+            <p className="text-[11px] text-sub">{t("cal.creditos")}: {indice.creditos}</p>
+          </div>
+        </div>
+        <p className="mt-2 text-[10px] text-sub">{t("cal.escala")}</p>
+      </section>
+
+      <section className="rounded-xl border border-borde bg-card p-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-sub">{t("cal.creditosSeccion")}</p>
+          <button onClick={() => setModalCreditos(true)} className={`${estilos.boton} ${estilos.secundario} px-3 py-1.5 text-xs`}>
             {t("cal.ajustarCreditos")}
           </button>
         </div>
-        <p className="mt-2 text-[10px] text-sub">{t("cal.escala")}</p>
+        <div className="grid gap-1.5 sm:grid-cols-2">
+          {materiasAct.map((m) => (
+            <div key={m.nombre} className="flex items-center gap-2 rounded-lg bg-card2 px-3 py-1.5">
+              <i className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: m.color }} />
+              <span className="min-w-0 flex-1 truncate text-xs font-semibold">{m.nombre}</span>
+              <span className="shrink-0 text-xs font-bold">{creditos[m.nombre] ?? m.creditos ?? 3}</span>
+            </div>
+          ))}
+        </div>
       </section>
 
       <Chips
@@ -82,9 +135,9 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
         color={(v) => colorDeMateria(v)}
       />
 
-      <section className="flex items-center justify-between gap-3 rounded-xl border border-borde bg-card p-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-sub">{t("cal.promedio")}</p>
+      <section className="rounded-xl border border-borde bg-card p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-sub">{t("cal.resumen")}</p>
+        <div className="mt-1 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <p className="text-3xl font-bold" style={{ color: colorDeMateria(activa) }}>
               {prom.promedio === null ? "—" : redondear(prom.promedio, 2)}
@@ -99,11 +152,13 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
               </span>
             )}
           </div>
-          <p className="text-[11px] text-sub">{t("cal.pesos", pesos)}</p>
+          <button onClick={() => setModalSeccion({})} className={`${estilos.boton} ${estilos.primario}`}>
+            {t("cal.seccion")}
+          </button>
         </div>
-        <button onClick={() => setModalSeccion({})} className={`${estilos.boton} ${estilos.primario}`}>
-          {t("cal.seccion")}
-        </button>
+        <p className="mt-1 text-[11px] text-sub">{t("cal.pesos", pesos)}</p>
+
+        {limiteActiva && <AsistenciaResumen l={limiteActiva} prom={prom.promedio} t={t} />}
       </section>
 
       {pesos > 100 && (
@@ -111,6 +166,8 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
           {t("cal.avisoPesos")}
         </div>
       )}
+
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-sub">{t("cal.seccionesTitulo")}</p>
 
       {secciones.length === 0 && (
         <section className="rounded-xl border border-dashed border-borde bg-card p-6 text-center text-sm text-sub">
@@ -177,15 +234,69 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
       {modalCreditos && (
         <CreditosModal
           materias={materiasAct.map((m) => m.nombre)}
-          creditos={cal.creditos}
+          creditos={creditos}
           onCerrar={() => setModalCreditos(false)}
-          onGuardar={cal.fijarCreditos}
+          onGuardar={fijarCreditosGlobal}
         />
       )}
 
       <VolverInicio alNavegar={alNavegar} />
     </div>
   );
+}
+
+function AsistenciaResumen({
+  l,
+  prom,
+  t,
+}: {
+  l: LimiteAsistencia;
+  prom: number | null;
+  t: (clave: string, ...args: (string | number)[]) => string;
+}) {
+  const color = colorLimite(l.estado);
+  const mensaje =
+    l.estado === "baja"
+      ? t("cal.asist.baja")
+      : l.estado === "perdida"
+        ? t("cal.asist.perdida")
+        : t("cal.asist.ok");
+  const letra: Letra | null =
+    prom === null ? null : letraDeNota(prom);
+  const efectiva: Letra | null =
+    l.estado === "perdida" ? "F" : l.estado === "baja" && letra ? bajarLetra(letra) : letra;
+
+  return (
+    <div className="mt-3 rounded-lg border border-borde px-3 py-2">
+      <div className="flex items-center gap-2">
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+        <p className="text-xs font-semibold">{t("cal.asistencia")}</p>
+        <span className="ml-auto shrink-0 text-[11px] font-bold" style={{ color }}>
+          {t("cal.asist.porcentaje", redondear(l.porcentaje, 1))}
+        </span>
+      </div>
+      <p className="mt-0.5 text-[11px] text-sub">{mensaje}</p>
+      {efectiva && (
+        <p className="mt-1 flex items-center gap-1.5 text-[11px] font-semibold">
+          {l.estado === "ok" ? t("cal.asist.letraSin") : t("cal.asist.letraEfect", efectiva)}
+          {l.estado !== "ok" && (
+            <span
+              className="inline-grid h-6 w-6 place-items-center rounded-md text-[11px] font-bold text-white"
+              style={{ backgroundColor: colorDeLetra(efectiva) }}
+            >
+              {efectiva}
+            </span>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function colorLimite(e: EstadoLimiteAsistencia): string {
+  if (e === "baja") return "#F59E0B";
+  if (e === "perdida") return "#EF4444";
+  return "#10B981";
 }
 
 function Titulo({ alNavegar }: { alNavegar: (v: Vista) => void }) {

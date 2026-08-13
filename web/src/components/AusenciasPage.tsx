@@ -5,7 +5,15 @@ import { useAusencias } from "../hooks/useAusencias";
 import { useHorario } from "../hooks/useHorario";
 import { useMaterias } from "../hooks/useMaterias";
 import { colorDeMateria, materiasActivas } from "../lib/materias";
-import { estadoDeDia, type EstadoDia } from "../lib/asistencia";
+import {
+  estadoDeDia,
+  limitesAsistencia,
+  SEMANAS_SEMESTRE,
+  type EstadoDia,
+  type EstadoLimiteAsistencia,
+  type LimiteAsistencia,
+} from "../lib/asistencia";
+import { redondear } from "../lib/storage";
 import { formatoFechaCorta, formatoFechaNumero, isoHoy, lunesDeISO, sumarDiasISO } from "../lib/fechas";
 import { useAjustes, useConfirmar, type Colores } from "../contexto/Ajustes";
 import { estilos, IconoBoton } from "./UI";
@@ -26,6 +34,17 @@ export function AusenciasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
   const [abiertos, setAbiertos] = useState<Record<string, boolean>>({});
 
   const materias = materiasActivas(horario, catalogo);
+
+  const creditos = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const ma of materias) m[ma.nombre] = ma.creditos ?? 3;
+    return m;
+  }, [materias]);
+
+  const limites = useMemo(
+    () => limitesAsistencia(horario, semanas, creditos),
+    [horario, semanas, creditos]
+  );
 
   const resumen = useMemo(() => {
     let pres = 0;
@@ -87,6 +106,22 @@ export function AusenciasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
         <Resumen valor={resumen.faltas} etiqueta={t("aus.diasFalta")} color={colores.asistAusencia} />
         <Resumen valor={resumen.pend} etiqueta={t("aus.diasPend")} color="#94A3B8" />
         <Resumen valor={resumen.feriados} etiqueta={t("aus.diasFeriado")} color={colores.asistFeriado} />
+      </section>
+
+      <section className="rounded-xl border border-borde bg-card p-4">
+        <h2 className="text-sm font-bold">{t("aus.limites.titulo")}</h2>
+        <p className="mt-0.5 text-[11px] text-sub">{t("aus.limites.sub")}</p>
+        <p className="mt-1 text-[10px] text-sub">{t("aus.limites.semanas", SEMANAS_SEMESTRE)}</p>
+
+        {limites.length === 0 ? (
+          <p className="mt-3 text-xs text-sub">{t("aus.limites.ninguna")}</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {limites.map((l) => (
+              <LimiteCard key={l.materia} l={l} t={t} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="rounded-xl border border-borde bg-card p-4">
@@ -164,6 +199,77 @@ export function AusenciasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
       <VolverInicio alNavegar={alNavegar} />
     </div>
   );
+}
+
+function LimiteCard({
+  l,
+  t,
+}: {
+  l: LimiteAsistencia;
+  t: (clave: string, ...args: (string | number)[]) => string;
+}) {
+  const color = colorLimite(l.estado);
+  return (
+    <div className="rounded-lg bg-card2 px-3 py-2">
+      <div className="flex items-center gap-2">
+        <i className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: colorDeMateria(l.materia) }} />
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold">{l.materia}</span>
+        <span className="shrink-0 text-[10px] text-sub">
+          {l.creditos} {t("cal.creditos")} · {t("aus.limites.horasSemana", redondear(l.horasSemanales, 2))}
+        </span>
+        <LimiteBadge estado={l.estado} t={t} />
+      </div>
+      <div className="mt-1.5 flex items-center gap-2">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-borde">
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${Math.min(100, l.porcentaje)}%`,
+              backgroundColor: color,
+            }}
+          />
+        </div>
+        <span className="w-14 shrink-0 text-right text-[11px] font-bold" style={{ color }}>
+          {redondear(l.porcentaje, 1)}%
+        </span>
+      </div>
+      <p className="mt-1 text-[10px] text-sub">
+        {t("aus.limites.faltas", redondear(l.horasFalta, 1), redondear(l.horasSemestre, 1))}
+      </p>
+      <p className="text-[10px] text-sub">
+        {t("aus.limites.hasta", redondear(l.horasParaBaja, 1), redondear(l.horasParaPerdida, 1))}
+      </p>
+    </div>
+  );
+}
+
+function LimiteBadge({
+  estado,
+  t,
+}: {
+  estado: EstadoLimiteAsistencia;
+  t: (clave: string, ...args: (string | number)[]) => string;
+}) {
+  const texto =
+    estado === "baja"
+      ? t("aus.limites.baja")
+      : estado === "perdida"
+        ? t("aus.limites.perdida")
+        : t("aus.limites.ok");
+  return (
+    <span
+      className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+      style={{ backgroundColor: colorLimite(estado) }}
+    >
+      {texto}
+    </span>
+  );
+}
+
+function colorLimite(e: EstadoLimiteAsistencia): string {
+  if (e === "baja") return "#F59E0B";
+  if (e === "perdida") return "#EF4444";
+  return "#10B981";
 }
 
 function Titulo({ alNavegar }: { alNavegar: (v: Vista) => void }) {

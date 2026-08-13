@@ -126,6 +126,21 @@ const es: Record<string, string> = {
   "aus.confirmEliminar":
     "¿Eliminar esta semana y su registro de asistencia?",
 
+  "aus.limites.titulo": "Límites de faltas (UTP)",
+  "aus.limites.sub":
+    "Más del 15% de faltas injustificadas baja la nota una letra · 33,3% o más pierde el derecho a examen.",
+  "aus.limites.semanas": "Total estimado sobre {0} semanas de semestre.",
+  "aus.limites.ninguna":
+    "Registra clases en el horario para calcular los límites por materia.",
+  "aus.limites.creditos": "Créditos",
+  "aus.limites.horasSemana": "{0} h/sem",
+  "aus.limites.faltas": "Faltas: {0} h de {1} h del semestre",
+  "aus.limites.porcentaje": "{0}% de horas de falta",
+  "aus.limites.hasta": "Bajar letra desde {0} h · Perder desde {1} h",
+  "aus.limites.ok": "Dentro del límite",
+  "aus.limites.baja": "Baja una letra",
+  "aus.limites.perdida": "Pierde la asignatura",
+
   "cal.titulo": "Calificaciones",
   "cal.sub": "Crea secciones con porcentaje y registra tus notas",
   "cal.promedio": "Promedio ponderado",
@@ -168,6 +183,18 @@ const es: Record<string, string> = {
   "cal.placeholder.cal": "Quiz 1",
   "cal.placeholder.nota": "85",
   "cal.activa": "{0}",
+
+  "cal.resumen": "Resumen de la materia",
+  "cal.creditosSeccion": "Créditos por materia",
+  "cal.seccionesTitulo": "Secciones de calificación",
+  "cal.ponderado": "Promedio semestral ponderado",
+  "cal.asistencia": "Asistencia (UTP)",
+  "cal.asist.ok": "Asistencia dentro del límite",
+  "cal.asist.baja": "Más del 15% de faltas: la nota baja una letra",
+  "cal.asist.perdida": "33,3% o más de faltas: pierde el derecho a examen (F)",
+  "cal.asist.porcentaje": "{0}% de horas de falta",
+  "cal.asist.letraEfect": "Letra efectiva: {0}",
+  "cal.asist.letraSin": "Sin cambio de letra",
 
   "bit.titulo": "Bitácoras",
   "bit.sub": "Registros y notas por materia",
@@ -399,6 +426,21 @@ const en: Record<string, string> = {
   "aus.yaExiste": "A week with that start date already exists.",
   "aus.confirmEliminar": "Delete this week and its attendance record?",
 
+  "aus.limites.titulo": "Absence limits (UTP)",
+  "aus.limites.sub":
+    "Over 15% unexcused absences drops the grade one letter · 33.3% or more loses exam rights.",
+  "aus.limites.semanas": "Estimated over a {0}-week semester.",
+  "aus.limites.ninguna":
+    "Register classes in the schedule to compute per-subject limits.",
+  "aus.limites.creditos": "Credits",
+  "aus.limites.horasSemana": "{0} h/week",
+  "aus.limites.faltas": "Absences: {0}h of {1}h this semester",
+  "aus.limites.porcentaje": "{0}% missed class hours",
+  "aus.limites.hasta": "Letter-drop from {0}h · Fail from {1}h",
+  "aus.limites.ok": "Within limit",
+  "aus.limites.baja": "Grade drops a letter",
+  "aus.limites.perdida": "Fails the subject",
+
   "cal.titulo": "Grades",
   "cal.sub": "Create percentage sections and track your grades",
   "cal.promedio": "Weighted average",
@@ -440,6 +482,18 @@ const en: Record<string, string> = {
   "cal.placeholder.cal": "Quiz 1",
   "cal.placeholder.nota": "85",
   "cal.activa": "{0}",
+
+  "cal.resumen": "Subject summary",
+  "cal.creditosSeccion": "Credits per subject",
+  "cal.seccionesTitulo": "Grade sections",
+  "cal.ponderado": "Weighted semester average",
+  "cal.asistencia": "Attendance (UTP)",
+  "cal.asist.ok": "Attendance within limit",
+  "cal.asist.baja": "Over 15% absences: the grade drops one letter",
+  "cal.asist.perdida": "33.3% or more absences: loses exam rights (F)",
+  "cal.asist.porcentaje": "{0}% missed class hours",
+  "cal.asist.letraEfect": "Effective grade: {0}",
+  "cal.asist.letraSin": "Grade unchanged",
 
   "bit.titulo": "Notes",
   "bit.sub": "Logs and notes per subject",

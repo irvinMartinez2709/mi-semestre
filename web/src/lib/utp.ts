@@ -17,6 +17,19 @@ export function puntosDeLetra(L: Letra): number {
   return 0;
 }
 
+export function bajarLetra(L: Letra): Letra {
+  switch (L) {
+    case "A":
+      return "B";
+    case "B":
+      return "C";
+    case "C":
+      return "D";
+    default:
+      return "F";
+  }
+}
+
 export function colorDeLetra(L: Letra): string {
   switch (L) {
     case "A":
@@ -80,4 +93,21 @@ export function indiceAcademico(
     puntos,
     creditos: creditosTotales,
   };
+}
+
+// Porcentaje final del semestre ponderado por créditos (0–100).
+export function promedioPonderado(
+  porMateria: Record<string, SeccionNota[]>,
+  creditos: Record<string, number>
+): number | null {
+  let acc = 0;
+  let total = 0;
+  for (const [materia, secciones] of Object.entries(porMateria)) {
+    const prom = promedioMateria(secciones).promedio;
+    if (prom === null) continue;
+    const cr = Math.max(0, creditos[materia] ?? 3);
+    acc += prom * cr;
+    total += cr;
+  }
+  return total === 0 ? null : acc / total;
 }

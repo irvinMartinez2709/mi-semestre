@@ -4,7 +4,7 @@ import { DIAS, nombreMateria } from "../lib/hora";
 import { useAusencias } from "../hooks/useAusencias";
 import { useHorario } from "../hooks/useHorario";
 import { useMaterias } from "../hooks/useMaterias";
-import { colorDeMateria, materiasActivas } from "../lib/materias";
+import { colorDeMateria, coloresDeMaterias, materiasActivas } from "../lib/materias";
 import {
   estadoDeDia,
   limitesAsistencia,
@@ -34,6 +34,11 @@ export function AusenciasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
   const [abiertos, setAbiertos] = useState<Record<string, boolean>>({});
 
   const materias = materiasActivas(horario, catalogo);
+
+  const mapaColores = useMemo(
+    () => coloresDeMaterias(horario, catalogo),
+    [horario, catalogo]
+  );
 
   const creditos = useMemo(() => {
     const m: Record<string, number> = {};
@@ -118,7 +123,7 @@ export function AusenciasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
         ) : (
           <div className="mt-3 space-y-2">
             {limites.map((l) => (
-              <LimiteCard key={l.materia} l={l} t={t} />
+              <LimiteCard key={l.materia} l={l} t={t} color={mapaColores.get(l.materia) || colorDeMateria(l.materia)} />
             ))}
           </div>
         )}
@@ -172,6 +177,7 @@ export function AusenciasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
               horario={horario}
               filtro={filtro}
               colores={colores}
+              mapaColores={mapaColores}
               diasCorto={diasCorto}
               locale={locale}
               t={t}
@@ -204,15 +210,17 @@ export function AusenciasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
 function LimiteCard({
   l,
   t,
+  color,
 }: {
   l: LimiteAsistencia;
   t: (clave: string, ...args: (string | number)[]) => string;
+  color: string;
 }) {
-  const color = colorLimite(l.estado);
+  const c = colorLimite(l.estado);
   return (
     <div className="rounded-lg bg-card2 px-3 py-2">
       <div className="flex items-center gap-2">
-        <i className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: colorDeMateria(l.materia) }} />
+        <i className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{l.materia}</span>
         <span className="shrink-0 text-[10px] text-sub">
           {l.creditos} {t("cal.creditos")} · {t("aus.limites.horasSemana", redondear(l.horasSemanales, 2))}
@@ -225,11 +233,11 @@ function LimiteCard({
             className="h-full rounded-full"
             style={{
               width: `${Math.min(100, l.porcentaje)}%`,
-              backgroundColor: color,
+              backgroundColor: c,
             }}
           />
         </div>
-        <span className="w-14 shrink-0 text-right text-[11px] font-bold" style={{ color }}>
+        <span className="w-14 shrink-0 text-right text-[11px] font-bold" style={{ color: c }}>
           {redondear(l.porcentaje, 1)}%
         </span>
       </div>
@@ -302,6 +310,7 @@ function NormaLegend({ colores }: { colores: Colores }) {
       <span className="flex items-center gap-1.5"><i className="h-4 w-4 rounded-md" style={{ backgroundColor: colores.asistPresente }} /> {t("aus.completo")}</span>
       <span className="flex items-center gap-1.5"><i className="h-4 w-4 rounded-md" style={{ backgroundColor: colores.asistParcial }} /> {t("aus.mixto")}</span>
       <span className="flex items-center gap-1.5"><i className="h-4 w-4 rounded-md" style={{ backgroundColor: colores.asistAusencia }} /> {t("aus.falta")}</span>
+      <span className="flex items-center gap-1.5"><i className="h-4 w-4 rounded-md" style={{ backgroundColor: colores.asistSinClases }} /> {t("aus.sinClases")}</span>
       <span className="flex items-center gap-1.5"><i className="h-4 w-4 rounded-md" style={{ backgroundColor: colores.asistFeriado }} /> {t("aus.feriado")}</span>
     </div>
   );
@@ -369,6 +378,7 @@ function colorDeEstado(e: EstadoDia, colores: Colores): string {
 function siguienteClase(estado: EstadoAsistencia): EstadoAsistencia {
   if (estado === null) return true;
   if (estado === true) return false;
+  if (estado === false) return "cancelled";
   return null;
 }
 
@@ -377,6 +387,7 @@ function SemanaCard({
   horario,
   filtro,
   colores,
+  mapaColores,
   diasCorto,
   locale,
   t,
@@ -392,6 +403,7 @@ function SemanaCard({
   horario: Horario;
   filtro: Filtro;
   colores: Colores;
+  mapaColores: Map<string, string>;
   diasCorto: string[];
   locale: string;
   t: (clave: string, ...args: (string | number)[]) => string;
@@ -455,6 +467,7 @@ function SemanaCard({
                   fecha={sumarDiasISO(semana.inicio, idx)}
                   diasCorto={diasCorto}
                   colores={colores}
+                  colorMateria={(nom) => mapaColores.get(nom) || colorDeMateria(nom)}
                   abierto={diaAbierto(dia)}
                   onToggle={() => onToggleDia(dia)}
                   estado={estado}
@@ -481,6 +494,7 @@ function DiaRow({
   fecha,
   diasCorto,
   colores,
+  colorMateria,
   abierto,
   onToggle,
   estado,
@@ -494,6 +508,7 @@ function DiaRow({
   fecha: string;
   diasCorto: string[];
   colores: Colores;
+  colorMateria: (nombre: string) => string;
   abierto: boolean;
   onToggle: () => void;
   estado: EstadoDia;
@@ -552,7 +567,7 @@ function DiaRow({
                 <span className="w-[76px] shrink-0 font-mono text-[10px] text-sub">{c.hora}</span>
                 <i
                   className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: colorDeMateria(c.materia) }}
+                  style={{ backgroundColor: colorMateria(c.materia) }}
                 />
                 <span className="min-w-0 flex-1 truncate font-semibold text-tinta">{c.materia}</span>
                 <span className="hidden shrink-0 text-[10px] uppercase text-sub sm:block">{t("hor.aula", c.aula)}</span>
@@ -593,6 +608,12 @@ function EstadoBoton({
     return (
       <button onClick={onClick} className="flex h-8 shrink-0 items-center gap-1 rounded-lg bg-[#EF4444] px-2.5 text-xs font-bold text-white">
         <XSVG /> {t("aus.falta")}
+      </button>
+    );
+  if (estado === "cancelled")
+    return (
+      <button onClick={onClick} className="flex h-8 shrink-0 items-center gap-1 rounded-lg bg-[#94A3B8] px-2.5 text-xs font-bold text-white">
+        <FeriadoSVG className="h-3.5 w-3.5" /> {t("aus.sinClases")}
       </button>
     );
   return (

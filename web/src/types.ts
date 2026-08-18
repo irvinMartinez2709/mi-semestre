@@ -28,6 +28,7 @@ export type Vista =
   | "calificaciones"
   | "bitacoras"
   | "materias"
+  | "tareas"
   | "config";
 
 export interface Seccion {
@@ -37,7 +38,7 @@ export interface Seccion {
   color: string;
 }
 
-export type EstadoAsistencia = boolean | null;
+export type EstadoAsistencia = boolean | "cancelled" | null;
 
 export interface Semana {
   id: string;
@@ -73,5 +74,29 @@ export interface Bitacora {
   titulo: string;
   contenido: string;
   adjuntos?: Adjunto[];
+  creada: string;
+}
+
+export type TipoRecordatorio = "unaVez" | "repetir" | "horas";
+
+export interface TareaChecklist {
+  id: string;
+  texto: string;
+  hecha: boolean;
+}
+
+export interface Tarea {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  materia: string;
+  fecha: string;
+  hora: string;
+  tipoRecordatorio: TipoRecordatorio;
+  repetirCadaMinutos?: number;
+  horasRecordatorio?: string[];
+  completada: boolean;
+  completadaEn: string | null;
+  checklist: TareaChecklist[];
   creada: string;
 }

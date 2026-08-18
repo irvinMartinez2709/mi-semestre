@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { DIAS, aMinutos, aMinutosRango, claseActiva, diaDeHoy, hoyMinutos, nombreMateria } from "../lib/hora";
-import { materiasActivas, colorDeMateria } from "../lib/materias";
+import { coloresDeMaterias, colorDeMateria, materiasActivas } from "../lib/materias";
 import { useHorario } from "../hooks/useHorario";
 import { useMaterias } from "../hooks/useMaterias";
 import { useAjustes, useConfirmar } from "../contexto/Ajustes";
@@ -60,6 +60,11 @@ export function HorarioPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
     }
     return mapa;
   }, [horario, materias]);
+
+  const coloresMap = useMemo(
+    () => coloresDeMaterias(horario, materias),
+    [horario, materias]
+  );
 
   const guardarClase = (clase: Clase) => {
     if (!form) return;
@@ -202,7 +207,7 @@ export function HorarioPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
                     <li key={`${c.hora}-${i}`} className="flex items-center gap-2 border-b border-borde/50 py-2 text-sm">
                       <span className="w-20 shrink-0 font-mono text-[10px] text-sub">{c.hora}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold" style={{ color: colorDeMateria(nombreMateria(c.materia)) }}>
+                        <p className="truncate font-semibold" style={{ color: coloresMap.get(nombreMateria(c.materia)) || colorDeMateria(nombreMateria(c.materia)) }}>
                           {c.materia}
                         </p>
                         <p className="truncate text-[10px] text-sub">

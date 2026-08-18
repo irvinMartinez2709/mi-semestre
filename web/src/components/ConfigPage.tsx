@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useAjustes, useConfirmar } from "../contexto/Ajustes";
+import { PRESETS_COLOR, useAjustes, useConfirmar } from "../contexto/Ajustes";
 import type { KColor } from "../contexto/Ajustes";
 import { estilos } from "./UI";
 import { Icono } from "./Icono";
@@ -18,11 +18,13 @@ const CLAVE_COLOR: { clave: KColor; traduccion: string }[] = [
   { clave: "calificaciones", traduccion: "cfg.color.calificaciones" },
   { clave: "bitacoras", traduccion: "cfg.color.bitacoras" },
   { clave: "materias", traduccion: "cfg.color.materias" },
+  { clave: "tareas", traduccion: "cfg.color.tareas" },
   { clave: "config", traduccion: "cfg.color.config" },
   { clave: "asistPresente", traduccion: "cfg.color.asistPresente" },
   { clave: "asistParcial", traduccion: "cfg.color.asistParcial" },
   { clave: "asistAusencia", traduccion: "cfg.color.asistAusencia" },
   { clave: "asistFeriado", traduccion: "cfg.color.asistFeriado" },
+  { clave: "asistSinClases", traduccion: "cfg.color.asistSinClases" },
 ];
 
 export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
@@ -38,6 +40,7 @@ export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
     fijarColor,
     esPorDefecto,
     restablecerColores,
+    aplicarPreset,
     titulo,
     subtitulo,
     fijarEncabezado,
@@ -207,6 +210,28 @@ export function ConfigPage({ alNavegar }: { alNavegar: (v: Vista) => void }) {
               {t("cfg.restablecer")}
             </button>
           )}
+        </div>
+        <div className="mt-3">
+          <p className="mb-1.5 text-xs font-semibold text-sub">{t("cfg.presets")}</p>
+          <p className="mb-2 text-[11px] text-sub">{t("cfg.presets.sub")}</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {PRESETS_COLOR.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => aplicarPreset(p.colores)}
+                className="rounded-lg border border-borde p-2 text-left transition-colors hover:border-acento"
+              >
+                <span className="flex items-center gap-1">
+                  {Object.values(p.colores).slice(0, 6).map((c, i) => (
+                    <i key={i} className="h-3 w-3 rounded-full" style={{ backgroundColor: c }} />
+                  ))}
+                </span>
+                <span className="mt-1.5 block truncate text-xs font-semibold">
+                  {t(`cfg.presets.${p.id}`)}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {CLAVE_COLOR.map((c) => (

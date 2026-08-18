@@ -42,9 +42,14 @@ export function estadoDeDia(
   if (registros[claveFeriado(dia)] === true) return "feriado";
   const marcados = claves
     .map((c) => registros[c])
-    .filter((v): v is boolean => v === true || v === false);
+    .filter(
+      (v): v is boolean | "cancelled" =>
+        v === true || v === false || v === "cancelled"
+    );
   if (marcados.length === 0) return "sin";
-  const presentes = marcados.filter(Boolean).length;
+  const presentes = marcados.filter(
+    (v) => v === true || v === "cancelled"
+  ).length;
   if (presentes === marcados.length) return "presente";
   if (presentes === 0) return "falta";
   return "parcial";

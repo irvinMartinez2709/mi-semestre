@@ -78,3 +78,16 @@ export function colorDeMateria(nombre: string): string {
   return PALETA_MATERIAS[hash % PALETA_MATERIAS.length];
 }
 
+// Mapa nombre -> color con el color del catálogo cuando existe, para que todas
+// las secciones muestren el mismo color de materia que en "Materias".
+export function coloresDeMaterias(
+  horario: Horario,
+  catalogo: Materia[]
+): Map<string, string> {
+  const mapa = new Map<string, string>();
+  for (const m of materiasActivas(horario, catalogo)) {
+    mapa.set(m.nombre, m.color);
+  }
+  return mapa;
+}
+

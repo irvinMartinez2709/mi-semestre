@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useBitacoras } from "../hooks/useBitacoras";
 import { useHorario } from "../hooks/useHorario";
 import { useMaterias } from "../hooks/useMaterias";
-import { colorDeMateria, materiasActivas } from "../lib/materias";
+import { colorDeMateria, coloresDeMaterias, materiasActivas } from "../lib/materias";
 import { formatoFechaCorta, isoDe, isoHoy } from "../lib/fechas";
 import { uid } from "../lib/storage";
 import { useAjustes, useConfirmar } from "../contexto/Ajustes";
@@ -20,6 +20,10 @@ export function BitacorasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
   const { materias: catalogo } = useMaterias();
   const { bitacoras, agregarBitacora, editarBitacora, eliminarBitacora } = useBitacoras();
   const materias = materiasActivas(horario, catalogo);
+  const mapaColores = useMemo(
+    () => coloresDeMaterias(horario, catalogo),
+    [horario, catalogo]
+  );
   const [filtro, setFiltro] = useState<Filtro>("__todas__");
   const [modal, setModal] = useState<null | { bit?: Bitacora }>(null);
 
@@ -70,6 +74,7 @@ export function BitacorasPage({ alNavegar }: { alNavegar: (v: Vista) => void }) 
               key={b.id}
               bit={b}
               locale={locale}
+              color={mapaColores.get(b.materia) || colorDeMateria(b.materia)}
               onEditar={() => setModal({ bit: b })}
               onEliminar={async () => {
                 const ok = await confirmar({
@@ -129,16 +134,17 @@ function ChipFiltro({
 function BitacoraCard({
   bit,
   locale,
+  color,
   onEditar,
   onEliminar,
 }: {
   bit: Bitacora;
   locale: string;
+  color: string;
   onEditar: () => void;
   onEliminar: () => void;
 }) {
   const { t } = useAjustes();
-  const color = colorDeMateria(bit.materia);
   const imagenes = bit.adjuntos?.filter((a): a is Extract<Adjunto, { tipo: "imagen" }> => a.tipo === "imagen") ?? [];
   const enlaces = bit.adjuntos?.filter((a): a is Extract<Adjunto, { tipo: "enlace" }> => a.tipo === "enlace") ?? [];
 

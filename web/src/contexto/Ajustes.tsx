@@ -24,11 +24,13 @@ export const COLORES_POR_DEFECTO = {
   calificaciones: "#8B5CF6",
   bitacoras: "#EC4899",
   materias: "#0D9488",
+  tareas: "#F43F5E",
   config: "#64748B",
   asistPresente: "#10B981",
   asistParcial: "#F59E0B",
   asistAusencia: "#EF4444",
   asistFeriado: "#38BDF8",
+  asistSinClases: "#94A3B8",
 } as const;
 
 export type KColor = keyof typeof COLORES_POR_DEFECTO;
@@ -43,11 +45,102 @@ const ETIQUETAS_COLOR: KColor[] = [
   "calificaciones",
   "bitacoras",
   "materias",
+  "tareas",
   "config",
   "asistPresente",
   "asistParcial",
   "asistAusencia",
   "asistFeriado",
+  "asistSinClases",
+];
+
+export interface PresetColor {
+  id: string;
+  colores: Colores;
+}
+
+export const PRESETS_COLOR: PresetColor[] = [
+  { id: "predeterminado", colores: COLORES_POR_DEFECTO },
+  {
+    id: "oceano",
+    colores: {
+      acento: "#0EA5E9",
+      hoy: "#14B8A6",
+      futura: "#BAE6FD",
+      horario: "#0284C7",
+      ausencias: "#06B6D4",
+      calificaciones: "#3B82F6",
+      bitacoras: "#6366F1",
+      materias: "#0891B2",
+      tareas: "#22D3EE",
+      config: "#475569",
+      asistPresente: "#10B981",
+      asistParcial: "#F59E0B",
+      asistAusencia: "#EF4444",
+      asistFeriado: "#38BDF8",
+      asistSinClases: "#94A3B8",
+    },
+  },
+  {
+    id: "bosque",
+    colores: {
+      acento: "#16A34A",
+      hoy: "#22C55E",
+      futura: "#BBF7D0",
+      horario: "#15803D",
+      ausencias: "#65A30D",
+      calificaciones: "#059669",
+      bitacoras: "#84CC16",
+      materias: "#166534",
+      tareas: "#4ADE80",
+      config: "#57534E",
+      asistPresente: "#10B981",
+      asistParcial: "#F59E0B",
+      asistAusencia: "#EF4444",
+      asistFeriado: "#38BDF8",
+      asistSinClases: "#94A3B8",
+    },
+  },
+  {
+    id: "atardecer",
+    colores: {
+      acento: "#EA580C",
+      hoy: "#F97316",
+      futura: "#FED7AA",
+      horario: "#C2410C",
+      ausencias: "#F59E0B",
+      calificaciones: "#DB2777",
+      bitacoras: "#E11D48",
+      materias: "#D97706",
+      tareas: "#FB7185",
+      config: "#78350F",
+      asistPresente: "#10B981",
+      asistParcial: "#F59E0B",
+      asistAusencia: "#EF4444",
+      asistFeriado: "#38BDF8",
+      asistSinClases: "#94A3B8",
+    },
+  },
+  {
+    id: "noche",
+    colores: {
+      acento: "#8B5CF6",
+      hoy: "#22D3EE",
+      futura: "#C4B5FD",
+      horario: "#6D28D9",
+      ausencias: "#A855F7",
+      calificaciones: "#7C3AED",
+      bitacoras: "#EC4899",
+      materias: "#4F46E5",
+      tareas: "#F472B6",
+      config: "#334155",
+      asistPresente: "#10B981",
+      asistParcial: "#F59E0B",
+      asistAusencia: "#EF4444",
+      asistFeriado: "#38BDF8",
+      asistSinClases: "#94A3B8",
+    },
+  },
 ];
 
 function hexARgb(h: string): string {
@@ -116,6 +209,7 @@ export interface AjustesValor {
   esPorDefecto: boolean;
   fijarColor: (k: KColor, v: string) => void;
   restablecerColores: () => void;
+  aplicarPreset: (colores: Colores) => void;
   titulo: string;
   subtitulo: string;
   fijarEncabezado: (titulo: string, subtitulo: string) => void;
@@ -181,6 +275,8 @@ export function AjustesProvider({ children }: { children: ReactNode }) {
 
   const restablecerColores = () => setColores({ ...COLORES_POR_DEFECTO });
 
+  const aplicarPreset = (c: Colores) => setColores({ ...c });
+
   const confirmar = (opcion: ConfirmarOpciones) =>
     new Promise<boolean>((resolver) => {
       setConfirmacion({ opcion, resolver, tipo: "confirmar" });
@@ -219,6 +315,7 @@ export function AjustesProvider({ children }: { children: ReactNode }) {
         ),
         fijarColor,
         restablecerColores,
+        aplicarPreset,
         titulo: encabezado.titulo,
         subtitulo: encabezado.subtitulo,
         fijarEncabezado: (titulo, subtitulo) =>

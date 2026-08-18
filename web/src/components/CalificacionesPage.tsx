@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useCalificaciones } from "../hooks/useCalificaciones";
 import { useHorario } from "../hooks/useHorario";
 import { useMaterias } from "../hooks/useMaterias";
-import { colorDeMateria, materiasActivas } from "../lib/materias";
+import { coloresDeMaterias, colorDeMateria, materiasActivas } from "../lib/materias";
 import { redondear } from "../lib/storage";
 import {
   colorDeLetra,
@@ -24,6 +24,10 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
   const materiasHook = useMaterias();
   const cal = useCalificaciones();
   const materiasAct = materiasActivas(horario, materiasHook.materias);
+  const mapaColores = useMemo(
+    () => coloresDeMaterias(horario, materiasHook.materias),
+    [horario, materiasHook.materias]
+  );
   const [seleccion, setSeleccion] = useState<string>("");
   const activa = seleccion || materiasAct[0]?.nombre || "";
 
@@ -117,14 +121,14 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
         opciones={materiasAct.map((m) => ({ id: m.nombre, etiqueta: m.nombre }))}
         seleccion={activa}
         onChange={setSeleccion}
-        color={(v) => colorDeMateria(v)}
+        color={(v) => mapaColores.get(v) || colorDeMateria(v)}
       />
 
       <section className="rounded-xl border border-borde bg-card p-4">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-sub">{t("cal.resumen")}</p>
         <div className="mt-1 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <p className="text-3xl font-bold" style={{ color: colorDeMateria(activa) }}>
+            <p className="text-3xl font-bold" style={{ color: mapaColores.get(activa) || colorDeMateria(activa) }}>
               {prom.promedio === null ? "—" : redondear(prom.promedio, 2)}
             </p>
             {prom.promedio !== null && (
@@ -163,7 +167,7 @@ export function CalificacionesPage({ alNavegar }: { alNavegar: (v: Vista) => voi
         <SeccionCard
           key={s.id}
           seccion={s}
-          color={colorDeMateria(activa)}
+          color={mapaColores.get(activa) || colorDeMateria(activa)}
           onEditar={() => setModalSeccion({ sec: s })}
           onEliminar={async () => {
             const ok = await confirmar({

@@ -5,6 +5,7 @@ export type NombreIcono =
   | "calificaciones"
   | "bitacoras"
   | "materias"
+  | "tareas"
   | "config"
   | "sol"
   | "luna"
@@ -69,6 +70,13 @@ export function Icono({ nombre, className = "w-5 h-5" }: Props) {
         <svg {...comunes} viewBox="0 0 24 24">
           <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
           <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+        </svg>
+      );
+    case "tareas":
+      return (
+        <svg {...comunes} viewBox="0 0 24 24">
+          <rect x="5" y="3" width="14" height="18" rx="2" />
+          <path d="M9 3.5h6M9 8.5l1 1 2-2M9 14l1 1 2-2M14 14.5h3" />
         </svg>
       );
     case "config":

@@ -4,11 +4,14 @@ import { useMaterias } from "../hooks/useMaterias";
 import { useAusencias } from "../hooks/useAusencias";
 import { useCalificaciones } from "../hooks/useCalificaciones";
 import { useBitacoras } from "../hooks/useBitacoras";
+import { useTareas } from "../hooks/useTareas";
 import { useAjustes } from "../contexto/Ajustes";
-import { materiasActivas } from "../lib/materias";
+import { coloresDeMaterias, materiasActivas } from "../lib/materias";
 import { redondear } from "../lib/storage";
 import { promedioMateria } from "../lib/utp";
+import { estadoTarea, fechaLimite } from "../lib/tareas";
 import { claseActiva, diaDeHoy, hoyMinutos, nombreMateria, totalClases } from "../lib/hora";
+import { formatoFechaCorta } from "../lib/fechas";
 import { Icono } from "./Icono";
 import type { NombreIcono } from "./Icono";
 import type { Vista } from "../types";
@@ -18,19 +21,20 @@ interface Props {
 }
 
 export function Home({ alNavegar }: Props) {
-  const { t, colores } = useAjustes();
+  const { t, locale, colores } = useAjustes();
   const { horario } = useHorario();
   const { materias } = useMaterias();
   const { semanas } = useAusencias();
   const { porMateria } = useCalificaciones();
   const { bitacoras } = useBitacoras();
+  const { tareas } = useTareas();
 
   const stats = useMemo(() => {
     let presentes = 0;
     let faltas = 0;
     for (const s of semanas)
       for (const v of Object.values(s.registros)) {
-        if (v === true) presentes++;
+        if (v === true || v === "cancelled") presentes++;
         else if (v === false) faltas++;
       }
     const notas = Object.values(porMateria)
@@ -44,6 +48,20 @@ export function Home({ alNavegar }: Props) {
     return { materias: materiasInfo, clasesSemana: totalClases(horario), presentes, faltas, promedio, nBitacoras: bitacoras.length, prox };
   }, [horario, materias, semanas, porMateria, bitacoras]);
 
+  const pendientes = useMemo(
+    () =>
+      tareas
+        .filter((x) => estadoTarea(x) === "pendiente")
+        .sort((a, b) => fechaLimite(a).getTime() - fechaLimite(b).getTime())
+        .slice(0, 5),
+    [tareas]
+  );
+
+  const mapaColores = useMemo(
+    () => coloresDeMaterias(horario, materias),
+    [horario, materias]
+  );
+
   const saludo = saludoKey();
 
   const tarjetas = [
@@ -52,6 +70,7 @@ export function Home({ alNavegar }: Props) {
     { id: "calificaciones" as Vista, nombre: t("sec.calificaciones"), desc: t("sec.calificaciones.desc"), color: colores.calificaciones },
     { id: "bitacoras" as Vista, nombre: t("sec.bitacoras"), desc: t("sec.bitacoras.desc"), color: colores.bitacoras },
     { id: "materias" as Vista, nombre: t("sec.materias"), desc: t("sec.materias.desc"), color: colores.materias },
+    { id: "tareas" as Vista, nombre: t("sec.tareas"), desc: t("sec.tareas.desc"), color: colores.tareas },
     { id: "config" as Vista, nombre: t("sec.config"), desc: t("sec.config.desc"), color: colores.config },
   ];
 
@@ -93,6 +112,51 @@ export function Home({ alNavegar }: Props) {
         <MiniStat etiqueta={t("stat.bitacoras")} valor={stats.nBitacoras} sub={t("stat.registradas")} color={colores.bitacoras} />
         <MiniStat etiqueta={t("stat.semana")} valor={stats.clasesSemana} sub={t("stat.clases")} color={colores.horario} />
       </section>
+
+      {pendientes.length > 0 && (
+        <section className="rounded-xl border border-borde bg-card p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2
+              className="text-sm font-bold"
+              style={{ color: colores.tareas }}
+            >
+              {t("home.tareasPendientes")}
+            </h2>
+            <button
+              onClick={() => alNavegar("tareas")}
+              className="text-xs font-semibold transition-opacity hover:opacity-80"
+              style={{ color: colores.tareas }}
+            >
+              {t("home.verTareas")}
+            </button>
+          </div>
+          <ul className="mt-2 space-y-1.5">
+            {pendientes.map((x) => {
+              const c = mapaColores.get(x.materia) || colores.tareas;
+              return (
+                <li key={x.id}>
+                  <button
+                    onClick={() => alNavegar("tareas")}
+                    className="flex w-full items-center gap-2 rounded-lg bg-card2 px-3 py-2 text-left"
+                  >
+                    <i
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: c }}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                      {x.titulo}
+                    </span>
+                    <span className="shrink-0 text-[11px] text-sub">
+                      {formatoFechaCorta(x.fecha, locale)}
+                      {x.hora ? ` · ${x.hora}` : ""}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {tarjetas.map((c) => (

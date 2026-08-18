@@ -20,6 +20,7 @@ export function Header({ actual, alNavegar }: Props) {
     { id: "calificaciones" as Vista, nombre: t("sec.calificaciones"), color: colores.calificaciones, icono: "calificaciones" as const },
     { id: "bitacoras" as Vista, nombre: t("sec.bitacoras"), color: colores.bitacoras, icono: "bitacoras" as const },
     { id: "materias" as Vista, nombre: t("sec.materias"), color: colores.materias, icono: "materias" as const },
+    { id: "tareas" as Vista, nombre: t("sec.tareas"), color: colores.tareas, icono: "tareas" as const },
     { id: "config" as Vista, nombre: t("sec.config"), color: colores.config, icono: "config" as const },
   ];
 

@@ -319,17 +319,20 @@ export async function exportarPDF(o: OpcionesPDF): Promise<ResultadoExportar> {
         if (clasesDia.length === 0) continue;
         const feriado = s.registros[claveFeriado(dia)] === true;
         for (const c of clasesDia) {
+          const v = s.registros[`${dia}|${c.hora}`];
           const estadoTexto =
             feriado
               ? t("pdf.feriado")
-              : s.registros[`${dia}|${c.hora}`] === true
+              : v === true
                 ? t("pdf.presente")
-                : s.registros[`${dia}|${c.hora}`] === false
+                : v === false
                   ? t("pdf.falta")
-                  : t("pdf.pendiente");
+                  : v === "cancelled"
+                    ? t("pdf.sinClases")
+                    : t("pdf.pendiente");
           if (!feriado) {
-            if (s.registros[`${dia}|${c.hora}`] === true) totalPres++;
-            else if (s.registros[`${dia}|${c.hora}`] === false) totalFaltas++;
+            if (v === true || v === "cancelled") totalPres++;
+            else if (v === false) totalFaltas++;
           }
           filas.push([
             o.dias[DIAS.indexOf(dia) + 1],
